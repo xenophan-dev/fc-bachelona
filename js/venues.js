@@ -42,7 +42,7 @@
     },
     {
       id: "filigrana", name: "Filigrana",
-      day: "thu", time: "13:00", cat: "com",
+      day: "thu", time: "13:00", cat: "com", reserved: true,
       lat: 19.41757, lng: -99.17402,
       addr: "Veracruz 62, Roma Norte",
     },
@@ -89,13 +89,13 @@
     },
     {
       id: "broka", name: "Broka",
-      day: "fri", time: "17:30", cat: "com",
+      day: "fri", time: "17:30", cat: "com", reserved: true,
       lat: 19.41641, lng: -99.15671,
       addr: "Zacatecas 126, Roma Norte",
     },
     {
       id: "arena-mexico", name: "ARENA MÉXICO · LUCHA LIBRE",
-      day: "fri", time: "20:30", cat: "act", major: true,
+      day: "fri", time: "20:30", cat: "act", major: true, reserved: true,
       lat: 19.42461, lng: -99.15200,
       addr: "Dr. Lavista 189, Doctores · MAIN EVENT",
     },
@@ -120,10 +120,10 @@
       addr: "Colima 166, Roma Norte",
     },
     {
-      id: "torito-lucas", name: "Torito Lucas (UCL Final)",
+      id: "torito-lucas", name: "UCL Final · venue TBD",
       day: "sat", time: "10:00", cat: "act", major: true,
-      lat: 19.4136, lng: -99.1612,
-      addr: "Roma Norte · sports bar · FEATURED FIXTURE · approx",
+      lat: 19.41775, lng: -99.16193,
+      addr: "likely Salón Malafama (Álvaro Obregón) — or Dog House / Torito Lucas · approx",
       representative: true,
     },
     {
@@ -148,7 +148,7 @@
     },
     {
       id: "handshake", name: "Handshake Speakeasy",
-      day: "sat", time: "18:00", cat: "beb", reserved: true,
+      day: "sat", time: "18:00", cat: "beb",
       lat: 19.42570, lng: -99.16534,
       addr: "Amberes 65, Juárez · book ahead",
     },
@@ -160,7 +160,7 @@
     },
     {
       id: "paramo", name: "Paramo",
-      day: "sat", time: "19:30", cat: "com",
+      day: "sat", time: "19:30", cat: "com", reserved: true,
       lat: 19.41418, lng: -99.16263,
       addr: "Yucatán 84, Roma Norte",
     },
