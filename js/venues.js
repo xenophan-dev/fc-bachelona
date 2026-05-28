@@ -169,14 +169,8 @@
 
     // ─────────────────── SUNDAY ───────────────────
     {
-      id: "cerrajeria", name: "Restaurante Cerrajería",
-      day: "sun", time: "08:30", cat: "com", reserved: true,
-      lat: 19.41688, lng: -99.16544,
-      addr: "Av. Álvaro Obregón 228, Roma Norte · 4 pax",
-    },
-    {
       id: "el-hidalguense", name: "El Hidalguense",
-      day: "sun", time: "13:30", cat: "com",
+      day: "sun", time: "13:00", cat: "com",
       lat: 19.40982, lng: -99.16521,
       addr: "Campeche 155, Roma Sur · goat birria",
     },
