@@ -26,6 +26,7 @@
     --c-beb: #B11839;
     --c-com: #D67B1A;
     --c-air: #C9A877;
+    --c-stay: #6E3FA3;
     --c-maybe: #888;
   }
   html, body { width: 100%; }
@@ -164,6 +165,7 @@
   .chip.type-act.active { background: var(--c-act); border-color: var(--c-act); color: var(--paper); }
   .chip.type-beb.active { background: var(--c-beb); border-color: var(--c-beb); color: var(--paper); }
   .chip.type-com.active { background: var(--c-com); border-color: var(--c-com); color: var(--paper); }
+  .chip.type-stay.active { background: var(--c-stay); border-color: var(--c-stay); color: var(--paper); }
 
   /* Counter */
   .counter {
@@ -201,6 +203,7 @@
   .pin.beb { background: var(--c-beb); }
   .pin.com { background: var(--c-com); }
   .pin.air { background: var(--c-air); }
+  .pin.stay { background: var(--c-stay); }
   .pin.maybe {
     background: var(--paper);
     border: 3px dashed #555;
@@ -239,6 +242,7 @@
   .popup-tag.act { color: var(--c-act); }
   .popup-tag.beb { color: var(--c-beb); }
   .popup-tag.com { color: var(--c-com); }
+  .popup-tag.stay { color: var(--c-stay); }
   .popup-tag.maybe { color: var(--muted); border-style: dashed; }
   .popup-link {
     display: inline-block;
@@ -323,6 +327,7 @@
   .vcard.beb .stripe { background: var(--c-beb); }
   .vcard.com .stripe { background: var(--c-com); }
   .vcard.air .stripe { background: var(--c-air); }
+  .vcard.stay .stripe { background: var(--c-stay); }
   .vcard.maybe .stripe { background: repeating-linear-gradient(45deg, var(--muted) 0 4px, transparent 4px 8px); }
 
   .vcard .row1 {
@@ -338,6 +343,7 @@
   .vcard .day-tag.fri { color: var(--c-fri); }
   .vcard .day-tag.sat { color: var(--c-sat); }
   .vcard .day-tag.sun { color: var(--c-sun); }
+  .vcard .day-tag.stay { color: var(--c-stay); }
   .vcard .day-tag.maybe { color: var(--muted); font-style: italic; }
   .vcard .name {
     font-family: 'Playfair Display', serif;
@@ -403,10 +409,10 @@
       <div class="filter-label">FILTER BY DAY</div>
       <div class="chips" id="dayChips">
         <div class="chip day-all active" data-day="all">ALL</div>
-        <div class="chip day-thu" data-day="thu">THU</div>
-        <div class="chip day-fri" data-day="fri">FRI</div>
-        <div class="chip day-sat" data-day="sat">SAT</div>
-        <div class="chip day-sun" data-day="sun">SUN</div>
+        <div class="chip day-thu active" data-day="thu">THU</div>
+        <div class="chip day-fri active" data-day="fri">FRI</div>
+        <div class="chip day-sat active" data-day="sat">SAT</div>
+        <div class="chip day-sun active" data-day="sun">SUN</div>
       </div>
     </div>
 
@@ -416,6 +422,7 @@
         <div class="chip type-act active" data-type="act"><span class="dot" style="background: var(--c-act); border-color: var(--c-act);"></span>ACTIVIDAD</div>
         <div class="chip type-beb active" data-type="beb"><span class="dot" style="background: var(--c-beb); border-color: var(--c-beb);"></span>BEBIDA</div>
         <div class="chip type-com active" data-type="com"><span class="dot" style="background: var(--c-com); border-color: var(--c-com);"></span>COMIDA</div>
+        <div class="chip type-stay active" data-type="stay"><span class="dot" style="background: var(--c-stay); border-color: var(--c-stay);"></span>AIRBNB</div>
       </div>
     </div>
 
@@ -437,6 +444,7 @@
     <span><span class="chip-dot" style="background:var(--c-act)"></span>ACTIVIDAD</span>
     <span><span class="chip-dot" style="background:var(--c-beb)"></span>BEBIDA</span>
     <span><span class="chip-dot" style="background:var(--c-com)"></span>COMIDA</span>
+    <span><span class="chip-dot" style="background:var(--c-stay)"></span>AIRBNB</span>
     <span><span class="chip-dot" style="background:var(--c-air)"></span>AIRPORT</span>
     <span><span class="chip-dot maybe"></span>MAYBE SPOT</span>
   </div>
@@ -463,28 +471,40 @@
   // ============================================================
   // STATE + FILTERS
   // ============================================================
+  const ALL_DAYS = ['thu', 'fri', 'sat', 'sun'];
   const state = {
-    day: 'all',
-    types: new Set(['act', 'beb', 'com']),
+    days: new Set(ALL_DAYS),                       // multi-select; can be empty
+    types: new Set(['act', 'beb', 'com', 'stay']), // 'stay' = Airbnb toggle
     nightclubOnly: false,
     reservedOnly: false,
     showMaybe: false,
   };
 
+  // Day, type, and the three Special toggles are independent. Maybe spots and
+  // the stay (Airbnb) category are day-agnostic. NIGHTCLUBS/RESERVED ONLY act
+  // as cross-day lenses so you can see them across all days at once.
   function passesFilters(v) {
+    // Cross-day hard gates
     if (state.nightclubOnly && !v.nightclub) return false;
     if (state.reservedOnly && !v.reserved) return false;
 
+    // Maybe spots: day-agnostic, shown only when the maybe toggle is on
     if (v.maybe) {
-      if (!state.showMaybe) return false;
-      // For maybe spots, only type filter applies (no day)
-      return state.types.has(v.cat);
+      return state.showMaybe && state.types.has(v.cat);
     }
 
-    // Day filter (ignore for airport pins which are tied to their day)
-    if (state.day !== 'all' && v.day !== state.day) return false;
+    // Stay (Airbnb HQ / crash pad): day-agnostic, own toggle
+    if (v.cat === 'stay') {
+      return state.types.has('stay');
+    }
 
-    // Type filter — airports are always shown
+    // Under a cross-day lens, show matching going venues regardless of day
+    if (state.nightclubOnly || state.reservedOnly) return true;
+
+    // Day gate for going venues
+    if (!state.days.has(v.day)) return false;
+
+    // Airports bypass the type filter
     if (v.cat === 'air') return true;
     return state.types.has(v.cat);
   }
@@ -515,7 +535,7 @@
       const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
       markers.push(m);
       const gMaps = window.VENUE_HELPERS.googleMapsUrl(v);
-      const dayBadge = v.maybe ? 'MAYBE SPOT' : (v.day ? DAY_LABEL[v.day] : '');
+      const dayBadge = v.maybe ? 'MAYBE SPOT' : (v.day ? DAY_LABEL[v.day] : (v.cat === 'stay' ? 'HOME BASE' : ''));
       const tagClass = v.maybe ? 'maybe' : v.cat;
       const tagLabel = v.maybe ? `MAYBE · ${CAT_LABEL[v.cat] || ''}` : (CAT_LABEL[v.cat] || '');
       m.bindPopup(`
@@ -550,8 +570,8 @@
       return;
     }
     list.innerHTML = visible.map((v, i) => {
-      const dayTagClass = v.maybe ? 'maybe' : v.day;
-      const dayTagLabel = v.maybe ? 'MAYBE' : (v.day ? DAY_LABEL[v.day] : '');
+      const dayTagClass = v.maybe ? 'maybe' : (v.day || (v.cat === 'stay' ? 'stay' : ''));
+      const dayTagLabel = v.maybe ? 'MAYBE' : (v.day ? DAY_LABEL[v.day] : (v.cat === 'stay' ? 'HQ' : ''));
       const stripeClass = v.maybe ? `maybe` : v.cat;
       const extra = [];
       if (v.reserved) extra.push('✓ RESERVED');
@@ -588,12 +608,29 @@
   // ============================================================
   // FILTER UI HANDLERS
   // ============================================================
+  // Day chips are multi-toggle. ALL = select-all / clear-all. Individual days
+  // toggle on/off; deselect every day to drop day-bound venues (handy for a
+  // pure maybe-spots / reserved / nightclubs view).
+  function syncDayChips() {
+    document.querySelectorAll('#dayChips .chip[data-day]').forEach(c => {
+      const d = c.dataset.day;
+      if (d === 'all') c.classList.toggle('active', state.days.size === ALL_DAYS.length);
+      else c.classList.toggle('active', state.days.has(d));
+    });
+  }
   document.getElementById('dayChips').addEventListener('click', e => {
     const chip = e.target.closest('.chip');
     if (!chip) return;
-    document.querySelectorAll('#dayChips .chip').forEach(c => c.classList.remove('active'));
-    chip.classList.add('active');
-    state.day = chip.dataset.day;
+    const d = chip.dataset.day;
+    if (d === 'all') {
+      if (state.days.size === ALL_DAYS.length) state.days.clear();
+      else state.days = new Set(ALL_DAYS);
+    } else if (state.days.has(d)) {
+      state.days.delete(d);
+    } else {
+      state.days.add(d);
+    }
+    syncDayChips();
     renderMarkers();
   });
 
