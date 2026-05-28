@@ -205,7 +205,7 @@
     { id: "vilsito",            name: "El Vilsito",                 maybe: true, cat: "com", lat: 19.38931, lng: -99.15276, addr: "Petén, Narvarte · al pastor" },
     { id: "los-parados",        name: "Los Parados",                maybe: true, cat: "com", lat: 19.40562, lng: -99.16115, addr: "Av. Monterrey 333, Roma Sur · tacos" },
     { id: "cucuyos",            name: "Los Cocuyos",                maybe: true, cat: "com", lat: 19.43041, lng: -99.13873, addr: "Bolívar 56, Centro · tacos" },
-    { id: "el-jarocho",         name: "Café El Jarocho",            maybe: true, cat: "com", lat: 19.33611, lng: -99.17964, addr: "Av. Copilco, Coyoacán · café" },
+    { id: "el-jarocho",         name: "Taquería El Jarocho",        maybe: true, cat: "com", lat: 19.41123, lng: -99.16601, addr: "Tapachula 94, Roma Norte · tacos" },
     { id: "el-paisa",           name: "Tacos El Paisa",             maybe: true, cat: "com", lat: 19.35541, lng: -99.09922, addr: "Calz. Ermita Iztapalapa · tacos" },
     { id: "pujol",              name: "Pujol",                      maybe: true, cat: "com", lat: 19.43229, lng: -99.19466, addr: "Tennyson 133, Polanco · fine dining" },
     { id: "los-carinitos",      name: "Los Cariñitos",              maybe: true, cat: "com", lat: 19.4165, lng: -99.1628, addr: "Roma Norte · approx", representative: true },
