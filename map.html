@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Map · CDMX Bach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #F0E4C8;
+    --paper-light: #FBF4DF;
+    --ink: #1A1410;
+    --muted: #5C4F35;
+    --gold: #C9A877;
+
+    --c-thu: #1E3A5F;
+    --c-fri: #C8181C;
+    --c-sat: #1B5E20;
+    --c-sun: #B5613C;
+
+    --c-act: #1A8F4F;
+    --c-beb: #B11839;
+    --c-com: #D67B1A;
+    --c-air: #C9A877;
+    --c-maybe: #888;
+  }
+  html, body { width: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(0,0,0,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(0,0,0,0.05) 0%, transparent 60%),
+      var(--paper);
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    padding-bottom: 60px;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(26,20,16,0.04) 1px, transparent 0);
+    background-size: 3px 3px;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    z-index: 0;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(240, 228, 200, 0.96);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--ink);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  nav a.back { color: var(--ink); text-decoration: none; font-size: 16px; letter-spacing: 0.2em; }
+  nav .days {
+    margin-left: auto; display: flex; gap: 12px;
+    font-size: 11px; letter-spacing: 0.3em; font-weight: 700;
+  }
+  nav .days a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+  }
+  nav .days a.current { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px 0; position: relative; z-index: 1; }
+
+  /* Header */
+  .hero { text-align: center; margin-bottom: 18px; }
+  .hero .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: clamp(54px, 14vw, 88px);
+    line-height: 0.92;
+    color: var(--ink);
+    margin: 6px 0 4px;
+    letter-spacing: -0.025em;
+  }
+  .hero .sub {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  /* Filters */
+  .filters {
+    background: var(--paper-light);
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    padding: 16px 18px 14px;
+    margin-bottom: 18px;
+  }
+  .filter-group { margin-bottom: 10px; }
+  .filter-group:last-child { margin-bottom: 0; }
+  .filter-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .chip {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    padding: 7px 12px;
+    border: 1.5px solid var(--ink);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .chip:hover { transform: translateY(-1px); }
+  .chip.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .chip .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+    vertical-align: middle;
+    border: 1px solid currentColor;
+  }
+  /* Day chips when active use day color */
+  .chip.day-thu.active { background: var(--c-thu); border-color: var(--c-thu); color: var(--paper); }
+  .chip.day-fri.active { background: var(--c-fri); border-color: var(--c-fri); color: var(--paper); }
+  .chip.day-sat.active { background: var(--c-sat); border-color: var(--c-sat); color: var(--paper); }
+  .chip.day-sun.active { background: var(--c-sun); border-color: var(--c-sun); color: var(--paper); }
+  .chip.type-act.active { background: var(--c-act); border-color: var(--c-act); color: var(--paper); }
+  .chip.type-beb.active { background: var(--c-beb); border-color: var(--c-beb); color: var(--paper); }
+  .chip.type-com.active { background: var(--c-com); border-color: var(--c-com); color: var(--paper); }
+
+  /* Counter */
+  .counter {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.25em;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .counter .num { color: var(--ink); font-weight: 700; }
+
+  /* Map */
+  .map-frame {
+    border: 3px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
+    background: var(--paper);
+    overflow: hidden;
+  }
+  #map {
+    width: 100%;
+    height: 540px;
+    filter: sepia(0.32) saturate(0.78) brightness(0.94) contrast(1.04);
+  }
+
+  /* Custom pins */
+  .pin {
+    border-radius: 50%;
+    border: 3px solid #FBF6EC;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .pin.size-default { width: 22px; height: 22px; }
+  .pin.size-major { width: 30px; height: 30px; border-width: 4px; }
+  .pin.act { background: var(--c-act); }
+  .pin.beb { background: var(--c-beb); }
+  .pin.com { background: var(--c-com); }
+  .pin.air { background: var(--c-air); }
+  .pin.maybe {
+    background: var(--paper);
+    border: 3px dashed #555;
+    box-shadow: none;
+  }
+  .pin.maybe.act { border-color: var(--c-act); }
+  .pin.maybe.beb { border-color: var(--c-beb); }
+  .pin.maybe.com { border-color: var(--c-com); }
+
+  .leaflet-popup-content-wrapper {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 0;
+    border: 2px solid var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .leaflet-popup-tip { background: var(--paper); border: 2px solid var(--ink); }
+  .popup-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 4px;
+    line-height: 1.1;
+  }
+  .popup-meta { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 0.04em; }
+  .popup-time { font-weight: 700; color: var(--ink); }
+  .popup-tag {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 6px;
+    font-size: 9px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    border: 1px solid currentColor;
+  }
+  .popup-tag.act { color: var(--c-act); }
+  .popup-tag.beb { color: var(--c-beb); }
+  .popup-tag.com { color: var(--c-com); }
+  .popup-tag.maybe { color: var(--muted); border-style: dashed; }
+  .popup-link {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
+
+  /* Legend below map */
+  .map-legend {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: var(--paper-light);
+    border: 1.5px solid var(--ink);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .map-legend .chip-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 1.5px solid #FBF6EC;
+  }
+  .map-legend .chip-dot.maybe {
+    background: var(--paper);
+    border: 1.5px dashed var(--muted);
+  }
+
+  /* Venue list */
+  .list-section { margin-top: 30px; }
+  .list-section h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.45em;
+    color: var(--muted);
+    font-weight: 700;
+    text-align: center;
+    padding-bottom: 8px;
+    border-bottom: 1.5px solid var(--ink);
+    margin-bottom: 14px;
+  }
+  .venue-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 10px;
+  }
+  .vcard {
+    background: var(--paper-light);
+    border: 2px solid var(--ink);
+    padding: 10px 12px;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .vcard:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .vcard .stripe {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+  }
+  .vcard.act .stripe { background: var(--c-act); }
+  .vcard.beb .stripe { background: var(--c-beb); }
+  .vcard.com .stripe { background: var(--c-com); }
+  .vcard.air .stripe { background: var(--c-air); }
+  .vcard.maybe .stripe { background: repeating-linear-gradient(45deg, var(--muted) 0 4px, transparent 4px 8px); }
+
+  .vcard .row1 {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    padding-left: 10px;
+  }
+  .vcard .day-tag.thu { color: var(--c-thu); }
+  .vcard .day-tag.fri { color: var(--c-fri); }
+  .vcard .day-tag.sat { color: var(--c-sat); }
+  .vcard .day-tag.sun { color: var(--c-sun); }
+  .vcard .day-tag.maybe { color: var(--muted); font-style: italic; }
+  .vcard .name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 17px;
+    color: var(--ink);
+    line-height: 1.1;
+    margin-top: 4px;
+    padding-left: 10px;
+  }
+  .vcard .meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    padding-left: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .empty {
+    text-align: center;
+    padding: 40px 20px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    border: 2px dashed var(--muted);
+  }
+
+  .footer {
+    margin-top: 40px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="back">← BACH</a>
+  <div class="days">
+    <a href="thursday.html">THU</a>
+    <a href="friday.html">FRI</a>
+    <a href="saturday.html">SAT</a>
+    <a href="sunday.html">SUN</a>
+    <a href="map.html" class="current">MAP</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="kicker">── interactive · cdmx bach '26 ──</div>
+    <h1>Map</h1>
+    <div class="sub">— every pin, every day, every taco —</div>
+  </div>
+
+  <div class="filters">
+    <div class="filter-group">
+      <div class="filter-label">FILTER BY DAY</div>
+      <div class="chips" id="dayChips">
+        <div class="chip day-all active" data-day="all">ALL</div>
+        <div class="chip day-thu" data-day="thu">THU</div>
+        <div class="chip day-fri" data-day="fri">FRI</div>
+        <div class="chip day-sat" data-day="sat">SAT</div>
+        <div class="chip day-sun" data-day="sun">SUN</div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">FILTER BY TYPE</div>
+      <div class="chips" id="typeChips">
+        <div class="chip type-act active" data-type="act"><span class="dot" style="background: var(--c-act); border-color: var(--c-act);"></span>ACTIVIDAD</div>
+        <div class="chip type-beb active" data-type="beb"><span class="dot" style="background: var(--c-beb); border-color: var(--c-beb);"></span>BEBIDA</div>
+        <div class="chip type-com active" data-type="com"><span class="dot" style="background: var(--c-com); border-color: var(--c-com);"></span>COMIDA</div>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-label">SPECIAL</div>
+      <div class="chips" id="specialChips">
+        <div class="chip" data-special="nightclub">★ NIGHTCLUBS ONLY</div>
+        <div class="chip" data-special="reserved">✓ RESERVED ONLY</div>
+        <div class="chip" data-special="maybe">+ MAYBE SPOTS</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="counter" id="counter">SHOWING <span class="num" id="visCount">0</span> OF <span class="num" id="totalCount">0</span> VENUES</div>
+
+  <div class="map-frame"><div id="map"></div></div>
+
+  <div class="map-legend">
+    <span><span class="chip-dot" style="background:var(--c-act)"></span>ACTIVIDAD</span>
+    <span><span class="chip-dot" style="background:var(--c-beb)"></span>BEBIDA</span>
+    <span><span class="chip-dot" style="background:var(--c-com)"></span>COMIDA</span>
+    <span><span class="chip-dot" style="background:var(--c-air)"></span>AIRPORT</span>
+    <span><span class="chip-dot maybe"></span>MAYBE SPOT</span>
+  </div>
+
+  <div class="list-section">
+    <h2>── VISIBLE VENUES ──</h2>
+    <div id="venueList" class="venue-grid"></div>
+  </div>
+
+  <div class="footer">
+    ─── EDWIN'S BACH · CDMX '26 ─── TAP A CARD TO ZOOM ───
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // ============================================================
+  // VENUE DATA — all stops across the trip
+  // ============================================================
+  const venues = [
+    // THURSDAY
+    { name: "MEX · Benito Juárez T1", day: "thu", time: "ARRIVALS", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1", major: true },
+    { name: "Filigrana", day: "thu", time: "13:00", cat: "com", lat: 19.4196, lng: -99.1620, addr: "Roma Norte · lunch" },
+    { name: "Contramar", day: "thu", time: "18:00", cat: "com", lat: 19.4178, lng: -99.1689, addr: "Calle de Durango 200, Roma Norte", reserved: true },
+    { name: "Tacos Chanito", day: "thu", time: "LATE", cat: "com", lat: 19.4144, lng: -99.1622, addr: "Roma Norte · late eats" },
+
+    // FRIDAY
+    { name: "Museo Nac. de Antropología", day: "fri", time: "11:30", cat: "act", lat: 19.4258, lng: -99.1862, addr: "Chapultepec" },
+    { name: "Cablecar · Chapultepec", day: "fri", time: "12:30", cat: "act", lat: 19.4192, lng: -99.1822, addr: "Bosque de Chapultepec" },
+    { name: "Licoreria Limantour", day: "fri", time: "16:00", cat: "beb", lat: 19.4163, lng: -99.1614, addr: "Av. Álvaro Obregón 106, Roma Norte", reserved: true },
+    { name: "Broka", day: "fri", time: "17:30", cat: "com", lat: 19.4170, lng: -99.1583, addr: "Roma Norte · aperitivos" },
+    { name: "ARENA MÉXICO · LUCHA LIBRE", day: "fri", time: "20:30", cat: "act", lat: 19.4221, lng: -99.1494, addr: "Doctores · MAIN EVENT", major: true },
+    { name: "Supra Rooftop", day: "fri", time: "22:30", cat: "beb", lat: 19.4163, lng: -99.1635, addr: "Roma Norte · rooftop" },
+    { name: "Hamburguesas a la Parrilla", day: "fri", time: "LATE", cat: "com", lat: 19.4156, lng: -99.1612, addr: "Roma Norte · late eats" },
+
+    // SATURDAY
+    { name: "Panadería Rosetta", day: "sat", time: "08:30", cat: "com", lat: 19.4159, lng: -99.1614, addr: "Colima 166, Roma Norte" },
+    { name: "Torito Lucas (UCL Final)", day: "sat", time: "10:00", cat: "act", lat: 19.4136, lng: -99.1612, addr: "Roma Norte · sports bar", major: true },
+    { name: "Tacos Don Juan", day: "sat", time: "12:00", cat: "com", lat: 19.4042, lng: -99.1718, addr: "Roma Sur · quesabirria" },
+    { name: "Taco Crawl", day: "sat", time: "12:30", cat: "com", lat: 19.4115, lng: -99.1670, addr: "Roma / Condesa" },
+    { name: "Mezcal Tasting", day: "sat", time: "14:00", cat: "beb", lat: 19.4205, lng: -99.1685, addr: "TBD · book ahead" },
+    { name: "Handshake Speakeasy", day: "sat", time: "18:00", cat: "beb", lat: 19.4287, lng: -99.1669, addr: "Juárez · book ahead" },
+    { name: "Tlecan", day: "sat", time: "18:30", cat: "beb", lat: 19.4163, lng: -99.1622, addr: "Roma Norte · mezcal bar" },
+    { name: "Paramo", day: "sat", time: "19:30", cat: "com", lat: 19.4189, lng: -99.1604, addr: "Roma Norte · dinner" },
+    { name: "Departamento", day: "sat", time: "23:00", cat: "beb", lat: 19.4232, lng: -99.1670, addr: "Roma / Juárez", nightclub: true, major: true },
+
+    // SUNDAY
+    { name: "Restaurante Cerrajería", day: "sun", time: "08:30", cat: "com", lat: 19.4290, lng: -99.1657, addr: "Av. Álvaro Obregón 228, Roma Norte", reserved: true },
+    { name: "El Hidalguense", day: "sun", time: "13:30", cat: "com", lat: 19.4144, lng: -99.1672, addr: "Roma Sur · goat birria" },
+    { name: "MEX · Benito Juárez T1", day: "sun", time: "DEPARTURES", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1 · wheels up", major: true },
+
+    // MAYBE SPOTS — backup options
+    { name: "Balmori Rooftop", maybe: true, cat: "beb", lat: 19.4140, lng: -99.1685, addr: "Roma Norte · rooftop bar" },
+    { name: "Cueva", maybe: true, cat: "beb", lat: 19.4195, lng: -99.1640, addr: "Roma Norte · bar" },
+    { name: "La Once Mil", maybe: true, cat: "com", lat: 19.4153, lng: -99.1719, addr: "Condesa · tacos" },
+    { name: "Taqueria Orinoco", maybe: true, cat: "com", lat: 19.4196, lng: -99.1657, addr: "Roma Norte · tacos 24h" },
+    { name: "Mi Compa Chava", maybe: true, cat: "com", lat: 19.4076, lng: -99.1761, addr: "Condesa · seafood" },
+    { name: "Café de Nadie", maybe: true, cat: "beb", lat: 19.4163, lng: -99.1631, addr: "Roma Norte · vinyl bar" },
+    { name: "Bar Oriente", maybe: true, cat: "beb", lat: 19.4250, lng: -99.1620, addr: "Juárez" },
+    { name: "Hotel rooftop Condesa", maybe: true, cat: "beb", lat: 19.4127, lng: -99.1747, addr: "Condesa · rooftop" },
+    { name: "El Cardenal", maybe: true, cat: "com", lat: 19.4337, lng: -99.1395, addr: "Centro · classic Mexican" },
+    { name: "Templo Mayor", maybe: true, cat: "act", lat: 19.4350, lng: -99.1316, addr: "Centro Histórico · ruins" },
+    { name: "Bellas Artes", maybe: true, cat: "act", lat: 19.4352, lng: -99.1413, addr: "Centro · museum" },
+    { name: "Zocalo", maybe: true, cat: "act", lat: 19.4326, lng: -99.1332, addr: "Centro · main square" },
+  ];
+
+  // Day labels for cards
+  const DAY_LABEL = { thu: "THU · 28", fri: "FRI · 29", sat: "SAT · 30", sun: "SUN · 31" };
+  const CAT_LABEL = { act: "ACTIVIDAD", beb: "BEBIDA", com: "COMIDA", air: "AIRPORT" };
+
+  // ============================================================
+  // STATE + FILTERS
+  // ============================================================
+  const state = {
+    day: 'all',
+    types: new Set(['act', 'beb', 'com']),
+    nightclubOnly: false,
+    reservedOnly: false,
+    showMaybe: false,
+  };
+
+  function passesFilters(v) {
+    if (state.nightclubOnly && !v.nightclub) return false;
+    if (state.reservedOnly && !v.reserved) return false;
+
+    if (v.maybe) {
+      if (!state.showMaybe) return false;
+      // For maybe spots, only type filter applies (no day)
+      return state.types.has(v.cat);
+    }
+
+    // Day filter (ignore for airport pins which are tied to their day)
+    if (state.day !== 'all' && v.day !== state.day) return false;
+
+    // Type filter — airports are always shown
+    if (v.cat === 'air') return true;
+    return state.types.has(v.cat);
+  }
+
+  // ============================================================
+  // MAP
+  // ============================================================
+  const map = L.map('map', { scrollWheelZoom: false, attributionControl: false })
+    .setView([19.4250, -99.1450], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '' }).addTo(map);
+  L.control.attribution({ prefix: false, position: 'bottomleft' }).addAttribution('© OSM').addTo(map);
+
+  let markers = [];
+
+  function renderMarkers() {
+    // remove old
+    markers.forEach(m => m.remove());
+    markers = [];
+
+    const visible = venues.filter(passesFilters);
+
+    visible.forEach(v => {
+      const sizeClass = v.major ? 'size-major' : 'size-default';
+      const maybeClass = v.maybe ? `maybe ${v.cat}` : v.cat;
+      const html = `<div class="pin ${sizeClass} ${maybeClass}"></div>`;
+      const size = v.major ? 30 : 22;
+      const icon = L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
+      const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
+      markers.push(m);
+      const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+      const dayBadge = v.maybe ? 'MAYBE SPOT' : (v.day ? DAY_LABEL[v.day] : '');
+      const tagClass = v.maybe ? 'maybe' : v.cat;
+      const tagLabel = v.maybe ? `MAYBE · ${CAT_LABEL[v.cat] || ''}` : (CAT_LABEL[v.cat] || '');
+      m.bindPopup(`
+        <div class="popup-name">${v.name}</div>
+        <div class="popup-meta"><span class="popup-time">${v.time || dayBadge}</span></div>
+        <div class="popup-meta">${v.addr}</div>
+        ${v.reserved ? '<div class="popup-meta" style="color: var(--c-act); font-weight: 700;">✓ RESERVED</div>' : ''}
+        ${v.nightclub ? '<div class="popup-meta" style="color: var(--c-beb); font-weight: 700;">★ NIGHTCLUB</div>' : ''}
+        <div class="popup-tag ${tagClass}">${tagLabel}</div>
+        <br><a class="popup-link" href="${gMaps}" target="_blank">OPEN IN MAPS →</a>
+      `);
+    });
+
+    // Fit bounds when filter changes (skip if empty)
+    if (visible.length > 0) {
+      const group = new L.featureGroup(visible.map(v => L.marker([v.lat, v.lng])));
+      map.fitBounds(group.getBounds().pad(0.18), { animate: true });
+    }
+
+    // Update counter
+    document.getElementById('visCount').textContent = visible.length;
+    document.getElementById('totalCount').textContent = venues.length;
+
+    // Update venue list
+    renderList(visible);
+  }
+
+  function renderList(visible) {
+    const list = document.getElementById('venueList');
+    if (visible.length === 0) {
+      list.innerHTML = '<div class="empty" style="grid-column: 1 / -1;">─── NO MATCHES ─── try widening filters</div>';
+      return;
+    }
+    list.innerHTML = visible.map((v, i) => {
+      const dayTagClass = v.maybe ? 'maybe' : v.day;
+      const dayTagLabel = v.maybe ? 'MAYBE' : (v.day ? DAY_LABEL[v.day] : '');
+      const stripeClass = v.maybe ? `maybe` : v.cat;
+      const extra = [];
+      if (v.reserved) extra.push('✓ RESERVED');
+      if (v.nightclub) extra.push('★ NIGHTCLUB');
+      if (v.major && !v.maybe) extra.push('★ MAIN');
+      return `
+        <div class="vcard ${stripeClass}" data-idx="${visible.indexOf(v)}" data-lat="${v.lat}" data-lng="${v.lng}">
+          <div class="stripe"></div>
+          <div class="row1">
+            <span class="day-tag ${dayTagClass}">${dayTagLabel}</span>
+            <span>${v.time || ''}</span>
+          </div>
+          <div class="name">${v.name}</div>
+          <div class="meta">${v.addr}${extra.length ? ' · ' + extra.join(' · ') : ''}</div>
+        </div>
+      `;
+    }).join('');
+
+    // Add click handlers to zoom to venue
+    list.querySelectorAll('.vcard').forEach((card, i) => {
+      card.addEventListener('click', () => {
+        const lat = parseFloat(card.dataset.lat);
+        const lng = parseFloat(card.dataset.lng);
+        map.setView([lat, lng], 16, { animate: true });
+        // Open the corresponding popup
+        if (markers[i]) markers[i].openPopup();
+        // Scroll to top so user sees the map
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  }
+
+  // ============================================================
+  // FILTER UI HANDLERS
+  // ============================================================
+  document.getElementById('dayChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    document.querySelectorAll('#dayChips .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    state.day = chip.dataset.day;
+    renderMarkers();
+  });
+
+  document.getElementById('typeChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const t = chip.dataset.type;
+    if (state.types.has(t)) {
+      state.types.delete(t);
+      chip.classList.remove('active');
+    } else {
+      state.types.add(t);
+      chip.classList.add('active');
+    }
+    renderMarkers();
+  });
+
+  document.getElementById('specialChips').addEventListener('click', e => {
+    const chip = e.target.closest('.chip');
+    if (!chip) return;
+    const s = chip.dataset.special;
+    chip.classList.toggle('active');
+    if (s === 'nightclub') state.nightclubOnly = chip.classList.contains('active');
+    if (s === 'reserved') state.reservedOnly = chip.classList.contains('active');
+    if (s === 'maybe') state.showMaybe = chip.classList.contains('active');
+    renderMarkers();
+  });
+
+  // Initial render
+  renderMarkers();
+</script>
+
+</body>
+</html>

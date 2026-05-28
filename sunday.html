@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sunday · CDMX Bach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=IBM+Plex+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,400;1,700;1,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #2A2014;
+    --paper: #F4E2A8;
+    --ink: #1A1410;
+    --muted: #5C4F35;
+    --red: #A8261C;
+    --c-act: #1A8F4F;
+    --c-beb: #B11839;
+    --c-com: #D67B1A;
+  }
+  html, body { width: 100%; }
+  body {
+    background: radial-gradient(ellipse at top, #2A2014 0%, #1F180E 60%, #15100A 100%);
+    font-family: 'Inter', sans-serif;
+    color: var(--paper);
+    padding-bottom: 60px;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(15, 10, 6, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--paper);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  nav a.back { color: var(--paper); text-decoration: none; font-size: 16px; letter-spacing: 0.2em; }
+  nav .days {
+    margin-left: auto; display: flex; gap: 14px;
+    font-size: 11px; letter-spacing: 0.3em; font-weight: 700;
+  }
+  nav .days a { color: rgba(244,226,168,0.55); text-decoration: none; padding: 4px 2px; border-bottom: 2px solid transparent; }
+  nav .days a.current { color: var(--red); border-bottom-color: var(--red); }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 28px 14px 0; }
+
+  /* Telegram paper */
+  .telegram {
+    background:
+      linear-gradient(180deg, rgba(0,0,0,0.04) 0px, transparent 4px),
+      var(--paper);
+    background-size: 100% 28px, 100% 100%;
+    position: relative;
+    padding: 26px 30px 22px;
+    border: 2px solid var(--ink);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.4);
+    color: var(--ink);
+    font-family: 'Special Elite', 'Courier New', monospace;
+  }
+  .telegram::before {
+    content: ""; position: absolute; inset: 0;
+    background-image: radial-gradient(circle at 1.5px 1.5px, rgba(26,20,16,0.08) 1px, transparent 0);
+    background-size: 4px 4px;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  /* perforated edges */
+  .tg-perf {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background-image: radial-gradient(circle at 8px center, transparent 4px, var(--bg) 4px);
+    background-size: 16px 8px;
+    background-repeat: repeat-x;
+  }
+  .tg-perf.top { top: -2px; }
+  .tg-perf.bottom { bottom: -2px; }
+
+  .tg-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--ink);
+    position: relative; z-index: 1;
+  }
+  .tg-brand {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+    color: var(--red);
+  }
+  .tg-brand-sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+    margin-top: 1px;
+  }
+  .tg-meta {
+    text-align: right;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    line-height: 1.6;
+  }
+
+  .tg-fields {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 6px 14px;
+    font-size: 13px;
+    position: relative; z-index: 1;
+  }
+  .tg-fields .lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.25em;
+    font-weight: 700;
+    padding-top: 5px;
+  }
+  .tg-fields .val {
+    border-bottom: 1px solid var(--ink);
+    padding-bottom: 4px;
+  }
+
+  .tg-message {
+    margin-top: 20px;
+    padding: 18px 0;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 18px;
+    line-height: 1.7;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink);
+    position: relative; z-index: 1;
+  }
+  .tg-message .stop {
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+  }
+
+  .tg-section {
+    margin-top: 18px;
+    position: relative; z-index: 1;
+  }
+  .tg-section h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5em;
+    color: var(--red);
+    text-align: center;
+    padding-bottom: 6px;
+    border-bottom: 1.5px dashed var(--ink);
+    font-weight: 700;
+  }
+
+  /* Itinerary stops */
+  .stops { margin-top: 14px; }
+  .stop-row {
+    display: grid;
+    grid-template-columns: 72px 8px 1fr 88px;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px dashed rgba(26,20,16,0.3);
+  }
+  .stop-row:last-child { border-bottom: none; }
+  .stop-row .time {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 22px;
+    color: var(--ink);
+    text-align: right;
+    line-height: 1;
+  }
+  .stop-row .stripe {
+    height: 36px;
+    width: 6px;
+  }
+  .stop-row .stripe.act { background: var(--c-act); }
+  .stop-row .stripe.beb { background: var(--c-beb); }
+  .stop-row .stripe.com { background: var(--c-com); }
+  .stop-row .stripe.dep { background: var(--red); }
+  .stop-row .info .name {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 19px;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+  }
+  .stop-row .info .sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 0.04em;
+  }
+  .stop-row .badge {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    text-align: right;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+  }
+  .stop-row .badge.act { color: var(--c-act); }
+  .stop-row .badge.beb { color: var(--c-beb); }
+  .stop-row .badge.com { color: var(--c-com); }
+  .stop-row .badge.dep { color: var(--red); }
+  .stop-row .badge.conf { color: var(--c-act); }
+
+  /* Pending block */
+  .pending {
+    margin-top: 14px;
+    padding: 10px 14px;
+    border: 1.5px dashed var(--red);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    line-height: 1.6;
+    position: relative; z-index: 1;
+  }
+  .pending .lbl {
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+  }
+
+  /* Sign-off */
+  .signoff {
+    margin-top: 22px;
+    text-align: right;
+    position: relative; z-index: 1;
+  }
+  .signoff .by {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.25em;
+  }
+  .signoff .name {
+    font-family: 'Special Elite', 'Courier New', monospace;
+    font-size: 24px;
+    color: var(--ink);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .signoff .stamp {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border: 2px solid var(--red);
+    color: var(--red);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    transform: rotate(-4deg);
+  }
+
+  /* Map */
+  .map-section { margin-top: 30px; }
+  .map-frame {
+    border: 3px solid var(--paper);
+    box-shadow: 0 8px 18px rgba(0,0,0,0.5);
+    overflow: hidden;
+  }
+  #map { width: 100%; height: 420px; filter: sepia(0.35) saturate(0.78) brightness(0.95) contrast(1.05); }
+  .map-legend {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--paper);
+  }
+  .map-legend .chip {
+    display: inline-block; width: 12px; height: 12px;
+    border-radius: 50%; margin-right: 6px;
+    vertical-align: middle; border: 1.5px solid var(--paper);
+  }
+
+  .pin {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 3px solid #FBF6EC;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .pin.com { background: var(--c-com); }
+  .pin.air { background: var(--red); }
+
+  .leaflet-popup-content-wrapper {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 0;
+    border: 2px solid var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .leaflet-popup-tip { background: var(--paper); border: 2px solid var(--ink); }
+  .popup-name { font-family: 'Special Elite', 'Courier New', monospace; font-weight: 700; font-size: 17px; text-transform: uppercase; margin-bottom: 4px; }
+  .popup-meta { font-size: 11px; color: var(--muted); }
+  .popup-time { font-weight: 700; color: var(--ink); }
+  .popup-link {
+    display: inline-block; margin-top: 8px; padding: 4px 8px;
+    border: 1.5px solid var(--ink); color: var(--ink);
+    text-decoration: none; font-size: 10px; letter-spacing: 0.18em; font-weight: 700;
+  }
+
+  .next-day {
+    margin-top: 30px;
+    padding: 18px 14px;
+    border-top: 1px solid var(--paper);
+    text-align: center;
+  }
+  .next-day .lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: rgba(244,226,168,0.6);
+    letter-spacing: 0.4em;
+  }
+  .next-day a {
+    display: inline-block; margin-top: 4px;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 22px;
+    color: var(--paper);
+    text-decoration: none;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="back">← BACH</a>
+  <div class="days">
+    <a href="thursday.html">THU</a>
+    <a href="friday.html">FRI</a>
+    <a href="saturday.html">SAT</a>
+    <a href="sunday.html" class="current">SUN</a>
+    <a href="map.html">MAP</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="telegram">
+    <div class="tg-perf top"></div>
+    <div class="tg-perf bottom"></div>
+
+    <div class="tg-header">
+      <div>
+        <div class="tg-brand">CDMX BACH CABLES</div>
+        <div class="tg-brand-sub">── DEPARTURES DESK · TERMINAL 1 ──</div>
+      </div>
+      <div class="tg-meta">
+        № 04 / 04<br/>
+        31 · V · '26<br/>
+        WHEELS UP DAY
+      </div>
+    </div>
+
+    <div class="tg-fields">
+      <div class="lbl">TO</div>            <div class="val">EL EQUIPO · ROMA NORTE</div>
+      <div class="lbl">FROM</div>          <div class="val">EDWIN · CIUDAD DE MÉXICO</div>
+      <div class="lbl">RE</div>            <div class="val">SUNDAY · DAY FOUR · WHEELS UP</div>
+      <div class="lbl">FILED</div>         <div class="val">31 MAYO 1926 · 0700 HRS LOCAL</div>
+    </div>
+
+    <div class="tg-message">
+      WHEELS UP TODAY <span class="stop">STOP</span>
+      BREAKFAST CONFIRMED AT CERRAJERIA 0830 FOR FOUR <span class="stop">STOP</span>
+      GOAT BIRRIA AT EL HIDALGUENSE BY 1330 <span class="stop">STOP</span>
+      SOUMYA OUT 1530 <span class="stop">STOP</span>
+      EDWIN AFTER 1600 <span class="stop">STOP</span>
+      JOSE TO LAX 1955 <span class="stop">STOP</span>
+      IZAK LAST OUT 2330 <span class="stop">STOP</span>
+      HASTA LUEGO CDMX <span class="stop">STOP</span>
+    </div>
+
+    <div class="tg-section">
+      <h2>── ITINERARIO ──</h2>
+      <div class="stops">
+        <div class="stop-row">
+          <div class="time">08:30</div>
+          <div class="stripe com"></div>
+          <div class="info"><div class="name">Restaurante Cerrajería</div><div class="sub">Breakfast · OpenTable confirmed · 4 pax</div></div>
+          <div class="badge conf">RESERVED</div>
+        </div>
+        <div class="stop-row">
+          <div class="time">13:30</div>
+          <div class="stripe com"></div>
+          <div class="info"><div class="name">El Hidalguense</div><div class="sub">Goat birria tacos · walk-in</div></div>
+          <div class="badge com">COMIDA</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tg-section">
+      <h2>── DEPARTURES ──</h2>
+      <div class="stops">
+        <div class="stop-row">
+          <div class="time">15:30</div>
+          <div class="stripe dep"></div>
+          <div class="info"><div class="name">Soumya Sanyal</div><div class="sub">→ LAX · lands 18:50</div></div>
+          <div class="badge dep">→ LAX</div>
+        </div>
+        <div class="stop-row">
+          <div class="time">≥16:00</div>
+          <div class="stripe dep"></div>
+          <div class="info"><div class="name">Edwin Elias</div><div class="sub">Sunday afternoon · exact time TBD</div></div>
+          <div class="badge dep">TBD</div>
+        </div>
+        <div class="stop-row">
+          <div class="time">19:55</div>
+          <div class="stripe dep"></div>
+          <div class="info"><div class="name">Jose Vasconez</div><div class="sub">→ LAX · lands 22:52</div></div>
+          <div class="badge dep">→ LAX</div>
+        </div>
+        <div class="stop-row">
+          <div class="time">23:30</div>
+          <div class="stripe dep"></div>
+          <div class="info"><div class="name">Izak</div><div class="sub">Last one out · late departure</div></div>
+          <div class="badge dep">LAST OUT</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pending">
+      <span class="lbl">● PENDING</span> · BRIAN · MIKE · VISHNU · DEPARTURES NOT FILED
+    </div>
+
+    <div class="signoff">
+      <div class="by">── SENT BY ──</div>
+      <div class="name">El Novio</div>
+      <div class="stamp">RECIBIDO · 0700</div>
+    </div>
+
+  </div>
+
+  <div class="map-section">
+    <div class="map-frame"><div id="map"></div></div>
+    <div class="map-legend">
+      <span><span class="chip" style="background:var(--c-com)"></span>COMIDA</span>
+      <span><span class="chip" style="background:var(--red)"></span>DEPARTURES (MEX)</span>
+    </div>
+  </div>
+
+  <div class="next-day">
+    <div class="lbl">─── ALL DAYS ───</div>
+    <a href="index.html">← Back to overview</a>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const venues = [
+    { name: "Restaurante Cerrajería", time: "08:30 · RESERVED · 4 PAX", cat: "com", lat: 19.4290, lng: -99.1657, addr: "Av. Álvaro Obregón 228, Roma Norte" },
+    { name: "El Hidalguense", time: "13:30 · WALK-IN", cat: "com", lat: 19.4144, lng: -99.1672, addr: "Roma Sur" },
+    { name: "MEX · Benito Juárez T1", time: "DEPARTURES", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1" },
+  ];
+
+  const map = L.map('map', { scrollWheelZoom: false, attributionControl: false })
+    .setView([19.4250, -99.1300], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '' }).addTo(map);
+  L.control.attribution({ prefix: false, position: 'bottomleft' }).addAttribution('© OSM').addTo(map);
+
+  venues.forEach(v => {
+    const icon = L.divIcon({ html: `<div class="pin ${v.cat}"></div>`, className: '', iconSize: [24,24], iconAnchor: [12,12] });
+    const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
+    const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+    m.bindPopup(`
+      <div class="popup-name">${v.name}</div>
+      <div class="popup-meta"><span class="popup-time">${v.time}</span></div>
+      <div class="popup-meta">${v.addr}</div>
+      <a class="popup-link" href="${gMaps}" target="_blank">OPEN IN MAPS →</a>
+    `);
+  });
+
+  const group = new L.featureGroup(venues.map(v => L.marker([v.lat, v.lng])));
+  map.fitBounds(group.getBounds().pad(0.2));
+</script>
+
+</body>
+</html>

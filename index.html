@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CDMX BACH '26</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900;9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #F0E4C8;
+    --ink: #1A1410;
+    --muted: #5C4F35;
+    --c-thu: #1E3A5F;
+    --c-fri: #C8181C;
+    --c-sat: #1B5E20;
+    --c-sun: #B5613C;
+  }
+  html, body { width: 100%; min-height: 100vh; }
+  body {
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(0,0,0,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(0,0,0,0.05) 0%, transparent 60%),
+      #F0E4C8;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    padding: 40px 22px 60px;
+    position: relative;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(26,20,16,0.04) 1px, transparent 0);
+    background-size: 3px 3px;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+    z-index: 0;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: center;
+  }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: clamp(70px, 18vw, 130px);
+    line-height: 0.88;
+    letter-spacing: -0.025em;
+    text-align: center;
+    margin: 8px 0 4px;
+  }
+  .subtitle {
+    text-align: center;
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-size: clamp(16px, 4vw, 22px);
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .meta {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(26,20,16,0.2);
+  }
+
+  /* Day grid */
+  .days {
+    margin-top: 36px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  @media (max-width: 520px) {
+    .days { grid-template-columns: 1fr; }
+  }
+
+  .day {
+    background: #FBF4DF;
+    border: 3px solid var(--ink);
+    padding: 18px 18px 16px;
+    box-shadow: 6px 6px 0 var(--ink);
+    text-decoration: none;
+    color: var(--ink);
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    min-height: 280px;
+  }
+  .day:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--ink);
+  }
+
+  .day .num {
+    font-family: 'Fraunces', serif;
+    font-weight: 900;
+    font-size: 56px;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.04em;
+  }
+  .day .name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 0.32em;
+    font-weight: 700;
+    margin-top: 4px;
+    color: var(--muted);
+  }
+  .day .accent {
+    width: 100%;
+    height: 6px;
+    margin-top: 12px;
+  }
+  .day .headline {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.15;
+    margin-top: 14px;
+    color: var(--ink);
+  }
+  .day .tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 6px;
+    letter-spacing: 0.18em;
+  }
+  .day .footer {
+    margin-top: auto;
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .day .arrow {
+    font-size: 16px;
+  }
+
+  .day.thu .accent { background: var(--c-thu); }
+  .day.fri .accent { background: var(--c-fri); }
+  .day.sat .accent { background: var(--c-sat); }
+  .day.sun .accent { background: var(--c-sun); }
+
+  .day.thu:hover { box-shadow: 8px 8px 0 var(--c-thu); }
+  .day.fri:hover { box-shadow: 8px 8px 0 var(--c-fri); }
+  .day.sat:hover { box-shadow: 8px 8px 0 var(--c-sat); }
+  .day.sun:hover { box-shadow: 8px 8px 0 var(--c-sun); }
+
+  /* Crew */
+  .crew {
+    margin-top: 38px;
+    padding: 20px 18px;
+    border: 2px dashed var(--ink);
+    text-align: center;
+  }
+  .crew h2 {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.45em;
+    font-weight: 700;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .crew .names {
+    font-family: 'Fraunces', serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  /* Footer */
+  .site-footer {
+    margin-top: 40px;
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+    line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="kicker">── may 28 → 31 · 2026 ──</div>
+  <h1>CDMX Bach</h1>
+  <div class="subtitle">— Edwin's bachelor party · Ciudad de México —</div>
+
+  <div class="meta">96 HRS · 7 PAX · 1 GROOM · ROMA NORTE HQ</div>
+
+  <div class="days">
+
+    <a href="thursday.html" class="day thu">
+      <div class="num">28</div>
+      <div class="name">THURSDAY</div>
+      <div class="accent"></div>
+      <div class="headline">Arrivals &amp; Contramar</div>
+      <div class="tag">6 ARRIVALS · 3 STOPS</div>
+      <div class="footer">
+        <span>boarding passes</span>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
+    <a href="friday.html" class="day fri">
+      <div class="num">29</div>
+      <div class="name">FRIDAY</div>
+      <div class="accent"></div>
+      <div class="headline">Lucha Libre Night</div>
+      <div class="tag">10 STOPS · MAIN EVENT 20:30</div>
+      <div class="footer">
+        <span>fight card</span>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
+    <a href="saturday.html" class="day sat">
+      <div class="num">30</div>
+      <div class="name">SATURDAY</div>
+      <div class="accent"></div>
+      <div class="headline">UCL Final &amp; Departamento</div>
+      <div class="tag">9 FIXTURES · FULL ROSTER</div>
+      <div class="footer">
+        <span>match day programme</span>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
+    <a href="sunday.html" class="day sun">
+      <div class="num">31</div>
+      <div class="name">SUNDAY</div>
+      <div class="accent"></div>
+      <div class="headline">Wheels Up</div>
+      <div class="tag">2 STOPS · 4 DEPARTURES</div>
+      <div class="footer">
+        <span>departures</span>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+
+  </div>
+
+  <a href="map.html" style="
+    display: block;
+    margin-top: 14px;
+    background: #FBF4DF;
+    border: 3px solid var(--ink);
+    padding: 18px 22px;
+    box-shadow: 6px 6px 0 var(--ink);
+    text-decoration: none;
+    color: var(--ink);
+    position: relative;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  " onmouseover="this.style.transform='translate(-2px,-2px)';this.style.boxShadow='8px 8px 0 var(--ink)'"
+     onmouseout="this.style.transform='';this.style.boxShadow='6px 6px 0 var(--ink)'">
+    <div style="
+      width: 70px; height: 70px;
+      border: 3px solid var(--ink);
+      background:
+        radial-gradient(circle at 30% 40%, var(--c-thu) 0 6px, transparent 6px),
+        radial-gradient(circle at 60% 35%, var(--c-fri) 0 6px, transparent 6px),
+        radial-gradient(circle at 45% 60%, var(--c-sat) 0 6px, transparent 6px),
+        radial-gradient(circle at 70% 65%, var(--c-sun) 0 6px, transparent 6px),
+        repeating-linear-gradient(0deg, rgba(26,20,16,0.08) 0 1px, transparent 1px 14px),
+        repeating-linear-gradient(90deg, rgba(26,20,16,0.08) 0 1px, transparent 1px 14px),
+        #F2E8DA;
+      flex-shrink: 0;
+    "></div>
+    <div style="flex: 1;">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.35em; color: var(--muted); font-weight: 700;">EVERY PIN · EVERY DAY</div>
+      <div style="font-family: 'Fraunces', serif; font-style: italic; font-weight: 900; font-size: 38px; color: var(--ink); line-height: 1; margin-top: 4px; letter-spacing: -0.02em;">Open the map</div>
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 6px; letter-spacing: 0.18em;">FILTER BY DAY · TYPE · NIGHTCLUB · MAYBES</div>
+    </div>
+    <div style="font-family: 'Fraunces', serif; font-size: 32px; color: var(--ink); font-style: italic;">→</div>
+  </a>
+
+  <div class="crew">
+    <h2>── el equipo ──</h2>
+    <div class="names">
+      Edwin · Izak · Jose · Vishnu<br/>
+      Brian · Mike · Soumya · Max
+    </div>
+  </div>
+
+  <div class="site-footer">
+    EDWIN'S BACH · CDMX '26<br/>
+    ─── itinerary built by hand ───
+  </div>
+
+</div>
+</body>
+</html>

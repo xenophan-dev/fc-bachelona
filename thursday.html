@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Thursday · CDMX Bach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #1F180E;
+    --paper: #F8F1E2;
+    --ink: #1A1410;
+    --gold: #C9A877;
+    --muted: #9A8868;
+    --c-thu: #1E3A5F;
+    --c-fri: #C8181C;
+    --c-sat: #1B5E20;
+    --c-sun: #B5613C;
+
+    --c-act: #1A8F4F;
+    --c-beb: #B11839;
+    --c-com: #D67B1A;
+  }
+  html, body { width: 100%; }
+  body {
+    background: radial-gradient(ellipse at top, #2A2014 0%, #1F180E 60%, #15100A 100%);
+    font-family: 'Inter', sans-serif;
+    color: var(--paper);
+    padding-bottom: 60px;
+  }
+
+  /* Nav */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(15, 10, 6, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--gold);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  nav a.back {
+    color: var(--gold);
+    text-decoration: none;
+    font-size: 16px;
+    letter-spacing: 0.2em;
+  }
+  nav .days {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    font-weight: 700;
+  }
+  nav .days a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 4px 2px;
+    border-bottom: 2px solid transparent;
+  }
+  nav .days a.current {
+    color: var(--c-thu);
+    border-bottom-color: var(--c-thu);
+  }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 28px 18px 0; }
+
+  /* Hero */
+  .hero { text-align: center; margin-bottom: 22px; }
+  .hero .kicker {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-weight: 900;
+    font-size: clamp(60px, 18vw, 100px);
+    line-height: 0.92;
+    color: var(--paper);
+    margin: 6px 0 4px;
+    letter-spacing: -0.02em;
+  }
+  .hero .sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+  }
+
+  /* Section header */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 30px 0 14px;
+  }
+  .section-divider .line {
+    flex: 1;
+    height: 1px;
+    background: var(--gold);
+  }
+  .section-divider .label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 0.5em;
+    font-weight: 700;
+  }
+
+  /* Boarding pass */
+  .pass-wrap {
+    margin: -2px auto;
+    width: 100%;
+    max-width: 720px;
+  }
+  .pass {
+    background: var(--paper);
+    display: grid;
+    grid-template-columns: 1fr 124px;
+    box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    position: relative;
+    font-family: 'IBM Plex Mono', monospace;
+    overflow: hidden;
+    color: var(--ink);
+  }
+  .pass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 1.5px 1.5px, rgba(26,20,16,0.05) 1px, transparent 0);
+    background-size: 5px 5px;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .pass-body { padding: 11px 16px 9px; position: relative; z-index: 2; }
+  .pass-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 6px; margin-bottom: 7px;
+    border-bottom: 1.5px dashed var(--c);
+  }
+  .pass-brand { color: var(--c); font-weight: 700; font-size: 13px; letter-spacing: 0.2em; }
+  .pass-date { font-size: 10px; color: #6F5C40; letter-spacing: 0.2em; }
+  .pass-route { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: center; }
+  .pass-route .label { font-size: 9px; color: #6F5C40; letter-spacing: 0.2em; }
+  .pass-route .airport { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 32px; line-height: 1; margin-top: 2px; color: var(--ink); }
+  .pass-route .airport.to { color: var(--c); }
+  .pass-route .city { font-size: 10px; color: #6F5C40; margin-top: 2px; letter-spacing: 0.06em; }
+  .pass-route .plane { font-size: 26px; color: var(--c); font-weight: 700; }
+  .pass-pax {
+    margin-top: 7px;
+    padding-top: 5px;
+    border-top: 1.5px dashed var(--c);
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 14px;
+    align-items: flex-end;
+  }
+  .pass-pax .label { font-size: 9px; color: #6F5C40; letter-spacing: 0.2em; }
+  .pass-pax .name { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 18px; margin-top: 2px; color: var(--ink); letter-spacing: 0.02em; }
+  .pass-pax .flt, .pass-pax .seat { font-size: 13px; font-weight: 600; margin-top: 2px; color: var(--ink); }
+  .barcode {
+    margin-top: 5px;
+    height: 11px;
+    width: 180px;
+    background-image: repeating-linear-gradient(to right,
+      #1A1410 0 2px, transparent 2px 4px,
+      #1A1410 4px 5px, transparent 5px 9px,
+      #1A1410 9px 11px, transparent 11px 13px,
+      #1A1410 13px 14px, transparent 14px 17px,
+      #1A1410 17px 20px, transparent 20px 22px);
+    opacity: 0.85;
+  }
+  .perf {
+    position: absolute; top: 0; bottom: 0; right: 124px; width: 2px;
+    background: repeating-linear-gradient(to bottom, var(--c) 0 4px, transparent 4px 8px);
+  }
+  .pass-stub { padding: 11px 11px; background: var(--tint); color: var(--c); text-align: center; display: flex; flex-direction: column; justify-content: space-between; position: relative; z-index: 2; }
+  .pass-stub .arr { font-size: 9px; letter-spacing: 0.3em; font-weight: 700; }
+  .pass-stub .time { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 32px; margin-top: 2px; line-height: 1; }
+  .pass-stub .cls { font-size: 9px; margin-top: 3px; letter-spacing: 0.1em; }
+  .pass-stub .stamp { margin-top: 4px; padding: 3px 5px; font-size: 9px; letter-spacing: 0.15em; font-weight: 700; transform: rotate(-4deg); border: 1.5px solid var(--c); align-self: center; }
+  .pass-stub .seatx { font-size: 9px; opacity: 0.65; letter-spacing: 0.18em; }
+  .pass { border: 3px solid var(--c); }
+  .navy { --c: #1E3A5F; --tint: #E0E6EE; }
+  .green { --c: #1A6A4A; --tint: #E0EDE5; }
+  .red { --c: #B11839; --tint: #F5DDE3; }
+
+  /* Vishnu */
+  .vishnu {
+    margin: 14px auto 6px;
+    padding: 12px 18px;
+    border: 2px dashed var(--gold);
+    background: rgba(201,168,119,0.08);
+    text-align: center;
+    max-width: 720px;
+  }
+  .vishnu .lbl { color: var(--gold); font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.35em; }
+  .vishnu .nm { font-family: 'Playfair Display', serif; font-style: italic; font-size: 22px; color: var(--paper); margin-top: 2px; }
+
+  /* Reservation slip */
+  .slip {
+    margin: 8px auto;
+    width: 100%;
+    max-width: 720px;
+    padding: 11px 16px;
+    display: grid;
+    grid-template-columns: 95px 1fr 110px;
+    gap: 14px;
+    align-items: center;
+    font-family: 'IBM Plex Mono', monospace;
+    position: relative;
+    overflow: hidden;
+  }
+  .slip::after {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 1.5px 1.5px, rgba(26,20,16,0.06) 1px, transparent 0);
+    background-size: 5px 5px;
+    mix-blend-mode: multiply; pointer-events: none;
+  }
+  .slip .tb { text-align: center; border-right: 2px dashed var(--c); padding-right: 8px; }
+  .slip .tb .t { font-family: 'Playfair Display', serif; font-weight: 900; font-size: 28px; color: var(--c); line-height: 1; }
+  .slip .tb .cu { font-size: 10px; color: var(--c); opacity: 0.78; margin-top: 6px; letter-spacing: 0.22em; font-weight: 700; }
+  .slip .vb .top { font-size: 10px; color: var(--c); opacity: 0.72; letter-spacing: 0.26em; font-weight: 700; }
+  .slip .vb .nm { font-family: 'Playfair Display', serif; font-weight: 700; font-size: 22px; color: var(--ink); margin-top: 3px; line-height: 1.05; }
+  .slip .vb .dt { font-size: 11px; color: var(--c); opacity: 0.85; margin-top: 3px; }
+  .slip .sb .stamp { display: inline-block; border: 2px solid var(--c); color: var(--c); padding: 5px 8px; font-size: 11px; letter-spacing: 0.18em; font-weight: 700; }
+  .slip .sb .stamp.conf { transform: rotate(-4deg); background: rgba(255,255,255,0.45); }
+  .slip.olive { --c: #6B7A38; background: #EAF0D0; border: 3px solid #6B7A38; box-shadow: 5px 5px 0 #6B7A38; }
+  .slip.ocean { --c: #1E6B7A; background: #D4EBF0; border: 3px solid #1E6B7A; box-shadow: 5px 5px 0 #1E6B7A; }
+  .slip.terra { --c: #B5421C; background: #F5DDD0; border: 3px solid #B5421C; box-shadow: 5px 5px 0 #B5421C; }
+  .slip.sb-right .sb { text-align: right; }
+
+  /* Map */
+  .map-section { margin: 30px 0 0; }
+  .map-frame {
+    border: 3px solid var(--gold);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    background: var(--paper);
+    overflow: hidden;
+    border-radius: 0;
+  }
+  #map { width: 100%; height: 440px; filter: sepia(0.32) saturate(0.78) brightness(0.94) contrast(1.04); }
+  .map-legend {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    justify-content: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    color: var(--gold);
+  }
+  .map-legend .chip {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 1.5px solid var(--paper);
+  }
+
+  /* Custom Leaflet markers */
+  .pin {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    border: 3px solid #FBF6EC;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .pin.act { background: var(--c-act); }
+  .pin.beb { background: var(--c-beb); }
+  .pin.com { background: var(--c-com); }
+  .pin.air { background: var(--gold); }
+  .pin.maybe {
+    background: transparent;
+    border: 3px dashed #6F5C40;
+  }
+  .leaflet-popup-content-wrapper {
+    background: var(--paper);
+    color: var(--ink);
+    border-radius: 0;
+    border: 2px solid var(--ink);
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .leaflet-popup-tip { background: var(--paper); border: 2px solid var(--ink); }
+  .popup-name {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 18px;
+    margin-bottom: 4px;
+  }
+  .popup-meta { font-size: 11px; color: #6F5C40; letter-spacing: 0.1em; }
+  .popup-time { font-weight: 700; color: var(--ink); }
+  .popup-link {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border: 1.5px solid var(--ink);
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+  }
+
+  /* Next day footer */
+  .next-day {
+    margin-top: 36px;
+    padding: 22px 18px;
+    border-top: 1px solid var(--gold);
+    text-align: center;
+  }
+  .next-day .lbl {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.4em;
+  }
+  .next-day a {
+    display: inline-block;
+    margin-top: 4px;
+    font-family: 'Playfair Display', serif;
+    font-style: italic;
+    font-size: 28px;
+    color: var(--c-fri);
+    text-decoration: none;
+    font-weight: 700;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="back">← BACH</a>
+  <div class="days">
+    <a href="thursday.html" class="current">THU</a>
+    <a href="friday.html">FRI</a>
+    <a href="saturday.html">SAT</a>
+    <a href="sunday.html">SUN</a>
+    <a href="map.html">MAP</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="kicker">── arrivals · cdmx bach '26 ──</div>
+    <h1>Thursday</h1>
+    <div class="sub">MAY 28 · BENITO JUÁREZ INTL</div>
+  </div>
+
+  <div class="section-divider">
+    <div class="line"></div>
+    <div class="label">ARRIVALS</div>
+    <div class="line"></div>
+  </div>
+
+  <!-- Boarding passes (compact) -->
+  <div class="pass-wrap" style="transform: rotate(-1deg);">
+    <div class="pass navy">
+      <div class="pass-body">
+        <div class="pass-head"><div class="pass-brand">★ BACH AIRLINES</div><div class="pass-date">28 MAY</div></div>
+        <div class="pass-route">
+          <div><div class="label">FROM</div><div class="airport">LAX</div><div class="city">Los Angeles</div></div>
+          <div class="plane">✈</div>
+          <div><div class="label">TO</div><div class="airport to">MEX</div><div class="city">Ciudad de México</div></div>
+        </div>
+        <div class="pass-pax">
+          <div><div class="label">PASSENGER</div><div class="name">JOSE VASCONEZ</div></div>
+          <div><div class="label">FLIGHT</div><div class="flt">— — —</div></div>
+          <div><div class="label">SEAT</div><div class="seat">12A</div></div>
+        </div>
+        <div class="barcode"></div>
+      </div>
+      <div class="perf"></div>
+      <div class="pass-stub"><div><div class="arr">ARR · LAX</div><div class="time">05:20</div><div class="cls">ECONOMY</div></div><div class="stamp">FIRST IN</div></div>
+    </div>
+  </div>
+
+  <div class="pass-wrap" style="transform: rotate(0.9deg);">
+    <div class="pass green">
+      <div class="pass-body">
+        <div class="pass-head"><div class="pass-brand">★ BACH AIRLINES</div><div class="pass-date">28 MAY</div></div>
+        <div class="pass-route">
+          <div><div class="label">FROM</div><div class="airport">???</div><div class="city">TBD</div></div>
+          <div class="plane">✈</div>
+          <div><div class="label">TO</div><div class="airport to">MEX</div><div class="city">Ciudad de México</div></div>
+        </div>
+        <div class="pass-pax">
+          <div><div class="label">PASSENGER</div><div class="name">MAX COOPER</div></div>
+          <div><div class="label">FLIGHT</div><div class="flt">— — —</div></div>
+          <div><div class="label">SEAT</div><div class="seat">—</div></div>
+        </div>
+        <div class="barcode"></div>
+      </div>
+      <div class="perf"></div>
+      <div class="pass-stub"><div><div class="arr">ARR · ???</div><div class="time">11:45</div><div class="cls">ECONOMY</div></div><div class="seatx">NEW ARRIVAL</div></div>
+    </div>
+  </div>
+
+  <div class="pass-wrap" style="transform: rotate(-0.6deg);">
+    <div class="pass red">
+      <div class="pass-body">
+        <div class="pass-head"><div class="pass-brand">★ BACH AIRLINES</div><div class="pass-date">28 MAY</div></div>
+        <div class="pass-route">
+          <div><div class="label">FROM</div><div class="airport">JFK</div><div class="city">New York</div></div>
+          <div class="plane">✈</div>
+          <div><div class="label">TO</div><div class="airport to">MEX</div><div class="city">Ciudad de México</div></div>
+        </div>
+        <div class="pass-pax">
+          <div><div class="label">PASSENGER</div><div class="name">EDWIN ELIAS</div></div>
+          <div><div class="label">FLIGHT</div><div class="flt">AA 2995</div></div>
+          <div><div class="label">SEAT</div><div class="seat">8C</div></div>
+        </div>
+        <div class="barcode"></div>
+      </div>
+      <div class="perf"></div>
+      <div class="pass-stub"><div><div class="arr">ARR · JFK</div><div class="time">12:53</div><div class="cls">ECONOMY</div></div><div class="stamp">EL NOVIO</div></div>
+    </div>
+  </div>
+
+  <div class="pass-wrap" style="transform: rotate(0.5deg);">
+    <div class="pass red">
+      <div class="pass-body">
+        <div class="pass-head"><div class="pass-brand">★ BACH AIRLINES</div><div class="pass-date">28 MAY</div></div>
+        <div class="pass-route">
+          <div><div class="label">FROM</div><div class="airport">JFK</div><div class="city">New York</div></div>
+          <div class="plane">✈</div>
+          <div><div class="label">TO</div><div class="airport to">MEX</div><div class="city">Ciudad de México</div></div>
+        </div>
+        <div class="pass-pax">
+          <div><div class="label">PASSENGER</div><div class="name">IZAK</div></div>
+          <div><div class="label">FLIGHT</div><div class="flt">AA 2995</div></div>
+          <div><div class="label">SEAT</div><div class="seat">8D</div></div>
+        </div>
+        <div class="barcode"></div>
+      </div>
+      <div class="perf"></div>
+      <div class="pass-stub"><div><div class="arr">ARR · JFK</div><div class="time">12:53</div><div class="cls">ECONOMY</div></div><div class="seatx">SEAT · 8D</div></div>
+    </div>
+  </div>
+
+  <div class="pass-wrap" style="transform: rotate(-0.9deg);">
+    <div class="pass navy">
+      <div class="pass-body">
+        <div class="pass-head"><div class="pass-brand">★ BACH AIRLINES</div><div class="pass-date">28 MAY</div></div>
+        <div class="pass-route">
+          <div><div class="label">FROM</div><div class="airport">LAX</div><div class="city">Los Angeles</div></div>
+          <div class="plane">✈</div>
+          <div><div class="label">TO</div><div class="airport to">MEX</div><div class="city">Ciudad de México</div></div>
+        </div>
+        <div class="pass-pax">
+          <div><div class="label">PASSENGER</div><div class="name">BRIAN GIRVAN</div></div>
+          <div><div class="label">FLIGHT</div><div class="flt">DL 631</div></div>
+          <div><div class="label">SEAT</div><div class="seat">21F</div></div>
+        </div>
+        <div class="barcode"></div>
+      </div>
+      <div class="perf"></div>
+      <div class="pass-stub"><div><div class="arr">ARR · LAX</div><div class="time">14:11</div><div class="cls">ECONOMY</div></div><div class="seatx">SEAT · 21F</div></div>
+    </div>
+  </div>
+
+  <div class="pass-wrap" style="transform: rotate(0.7deg);">
+    <div class="pass navy">
+      <div class="pass-body">
+        <div class="pass-head"><div class="pass-brand">★ BACH AIRLINES</div><div class="pass-date">28 MAY</div></div>
+        <div class="pass-route">
+          <div><div class="label">FROM</div><div class="airport">LAX</div><div class="city">Los Angeles</div></div>
+          <div class="plane">✈</div>
+          <div><div class="label">TO</div><div class="airport to">MEX</div><div class="city">Ciudad de México</div></div>
+        </div>
+        <div class="pass-pax">
+          <div><div class="label">PASSENGER</div><div class="name">MIKE</div></div>
+          <div><div class="label">FLIGHT</div><div class="flt">DL 631 ★</div></div>
+          <div><div class="label">SEAT</div><div class="seat">21E</div></div>
+        </div>
+        <div class="barcode"></div>
+      </div>
+      <div class="perf"></div>
+      <div class="pass-stub"><div><div class="arr">ARR · LAX</div><div class="time">14:11</div><div class="cls">ECONOMY</div></div><div class="seatx">SEAT · 21E</div></div>
+    </div>
+  </div>
+
+  <div class="vishnu">
+    <div class="lbl">◉ ALREADY ON SITE</div>
+    <div class="nm">Vishnu — somewhere in CDMX</div>
+  </div>
+
+  <div class="section-divider">
+    <div class="line"></div>
+    <div class="label">ITINERARIO</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="slip olive sb-right">
+    <div class="tb"><div class="t">13:00</div><div class="cu">ALMUERZO</div></div>
+    <div class="vb"><div class="top">⌘ MESA RESERVADA</div><div class="nm">Filigrana</div><div class="dt">Roma Norte · solo lunch hour</div></div>
+    <div class="sb"><div class="stamp">WALK-IN</div></div>
+  </div>
+  <div class="slip ocean sb-right">
+    <div class="tb"><div class="t">18:00</div><div class="cu">MARISCOS</div></div>
+    <div class="vb"><div class="top">⌘ MESA RESERVADA</div><div class="nm">Contramar</div><div class="dt">Roma Norte · seafood feast</div></div>
+    <div class="sb"><div class="stamp conf">RESERVED</div></div>
+  </div>
+  <div class="slip terra sb-right">
+    <div class="tb"><div class="t">LATE</div><div class="cu">ANTOJITOS</div></div>
+    <div class="vb"><div class="top">⌘ MESA RESERVADA</div><div class="nm">Tacos Chanito</div><div class="dt">La madrugada · late eats</div></div>
+    <div class="sb"><div class="stamp">WALK-IN</div></div>
+  </div>
+
+  <div class="section-divider">
+    <div class="line"></div>
+    <div class="label">MAP</div>
+    <div class="line"></div>
+  </div>
+
+  <div class="map-section">
+    <div class="map-frame"><div id="map"></div></div>
+    <div class="map-legend">
+      <span><span class="chip" style="background: var(--gold);"></span>AIRPORT</span>
+      <span><span class="chip" style="background: var(--c-com);"></span>COMIDA</span>
+    </div>
+  </div>
+
+  <div class="next-day">
+    <div class="lbl">─── UP NEXT ───</div>
+    <a href="friday.html">Friday → Lucha Libre</a>
+  </div>
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  // Approximate venue coordinates for Thursday
+  const venues = [
+    { name: "MEX · Benito Juárez T1", time: "ARRIVALS", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1" },
+    { name: "Filigrana", time: "13:00 · Lunch", cat: "com", lat: 19.4196, lng: -99.1620, addr: "Roma Norte" },
+    { name: "Contramar", time: "18:00 · Dinner", cat: "com", lat: 19.4178, lng: -99.1689, addr: "Calle de Durango 200, Roma Norte" },
+    { name: "Tacos Chanito", time: "LATE · Antojitos", cat: "com", lat: 19.4144, lng: -99.1622, addr: "Roma Norte" },
+  ];
+
+  const map = L.map('map', { scrollWheelZoom: false, attributionControl: false })
+    .setView([19.4250, -99.1300], 12);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19, attribution: ''
+  }).addTo(map);
+
+  L.control.attribution({ prefix: false, position: 'bottomleft' }).addAttribution('© OSM').addTo(map);
+
+  venues.forEach(v => {
+    const icon = L.divIcon({
+      html: `<div class="pin ${v.cat}"></div>`,
+      className: '',
+      iconSize: [24, 24],
+      iconAnchor: [12, 12]
+    });
+    const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
+    const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+    m.bindPopup(`
+      <div class="popup-name">${v.name}</div>
+      <div class="popup-meta"><span class="popup-time">${v.time}</span></div>
+      <div class="popup-meta">${v.addr}</div>
+      <a class="popup-link" href="${gMaps}" target="_blank">OPEN IN MAPS →</a>
+    `);
+  });
+
+  // Fit bounds to all markers
+  const group = new L.featureGroup(venues.map(v => L.marker([v.lat, v.lng])));
+  map.fitBounds(group.getBounds().pad(0.2));
+</script>
+
+</body>
+</html>
