@@ -2,7 +2,7 @@
 
 Static, mobile-first itinerary site for Edwin's bachelor party in Mexico City (May 28–31, 2026).
 
-**Live:** https://fcbachelona.com _(filled in after deploy)_
+**Live:** https://www.fcbachelona.com (apex `fcbachelona.com` redirects to www)
 
 ## Pages
 
