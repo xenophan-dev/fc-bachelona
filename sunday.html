@@ -197,6 +197,7 @@
   .stop-row .stripe.beb { background: var(--c-beb); }
   .stop-row .stripe.com { background: var(--c-com); }
   .stop-row .stripe.dep { background: var(--red); }
+  .stop-row .info { min-width: 0; } /* let the 1fr track shrink/wrap on narrow phones */
   .stop-row .info .name {
     font-family: 'Special Elite', 'Courier New', monospace;
     font-size: 19px;
@@ -204,6 +205,7 @@
     text-transform: uppercase;
     letter-spacing: 0.02em;
     line-height: 1.1;
+    overflow-wrap: break-word;
   }
   .stop-row .info .sub {
     font-family: 'IBM Plex Mono', monospace;
@@ -224,6 +226,15 @@
   .stop-row .badge.com { color: var(--c-com); }
   .stop-row .badge.dep { color: var(--red); }
   .stop-row .badge.conf { color: var(--c-act); }
+
+  /* Narrow phones: tighten columns so the stop-name track has room to wrap
+     at word boundaries instead of breaking mid-word. */
+  @media (max-width: 420px) {
+    .stop-row { grid-template-columns: 52px 6px 1fr 56px; gap: 8px; }
+    .stop-row .time { font-size: 18px; }
+    .stop-row .info .name { font-size: 16px; }
+    .stop-row .badge { font-size: 8px; letter-spacing: 0.06em; }
+  }
 
   /* Pending block */
   .pending {
