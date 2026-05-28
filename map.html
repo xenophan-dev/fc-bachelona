@@ -575,9 +575,10 @@
       card.addEventListener('click', () => {
         const lat = parseFloat(card.dataset.lat);
         const lng = parseFloat(card.dataset.lng);
-        map.setView([lat, lng], 16, { animate: true });
-        // Open the corresponding popup
-        if (markers[i]) markers[i].openPopup();
+        // Defer opening the popup until the fly animation settles — opening it
+        // immediately lets the popup's autoPan interrupt the in-flight zoom.
+        map.once('moveend', () => { if (markers[i]) markers[i].openPopup(); });
+        map.flyTo([lat, lng], 16, { duration: 0.6 });
         // Scroll to top so user sees the map
         window.scrollTo({ top: 0, behavior: 'smooth' });
       });
