@@ -473,13 +473,10 @@
 
 </div>
 
+<script src="js/venues.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  const venues = [
-    { name: "Restaurante Cerrajería", time: "08:30 · RESERVED · 4 PAX", cat: "com", lat: 19.4290, lng: -99.1657, addr: "Av. Álvaro Obregón 228, Roma Norte" },
-    { name: "El Hidalguense", time: "13:30 · WALK-IN", cat: "com", lat: 19.4144, lng: -99.1672, addr: "Roma Sur" },
-    { name: "MEX · Benito Juárez T1", time: "DEPARTURES", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1" },
-  ];
+  const venues = window.VENUE_HELPERS.forDay('sun');
 
   const map = L.map('map', { scrollWheelZoom: false, attributionControl: false })
     .setView([19.4250, -99.1300], 12);
@@ -487,12 +484,19 @@
   L.control.attribution({ prefix: false, position: 'bottomleft' }).addAttribution('© OSM').addTo(map);
 
   venues.forEach(v => {
-    const icon = L.divIcon({ html: `<div class="pin ${v.cat}"></div>`, className: '', iconSize: [24,24], iconAnchor: [12,12] });
+    const size = v.major ? 30 : 24;
+    const icon = L.divIcon({
+      html: `<div class="pin ${v.cat}${v.major ? ' major' : ''}"></div>`,
+      className: '',
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2],
+    });
     const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
-    const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+    const gMaps = window.VENUE_HELPERS.googleMapsUrl(v);
+    const suffix = v.reserved ? ' · RESERVED · 4 PAX' : (v.cat === 'com' && !v.major ? ' · WALK-IN' : '');
     m.bindPopup(`
       <div class="popup-name">${v.name}</div>
-      <div class="popup-meta"><span class="popup-time">${v.time}</span></div>
+      <div class="popup-meta"><span class="popup-time">${v.time}${suffix}</span></div>
       <div class="popup-meta">${v.addr}</div>
       <a class="popup-link" href="${gMaps}" target="_blank">OPEN IN MAPS →</a>
     `);

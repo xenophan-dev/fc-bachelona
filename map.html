@@ -452,61 +452,13 @@
 
 </div>
 
+<script src="js/venues.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ============================================================
-  // VENUE DATA — all stops across the trip
-  // ============================================================
-  const venues = [
-    // THURSDAY
-    { name: "MEX · Benito Juárez T1", day: "thu", time: "ARRIVALS", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1", major: true },
-    { name: "Filigrana", day: "thu", time: "13:00", cat: "com", lat: 19.4196, lng: -99.1620, addr: "Roma Norte · lunch" },
-    { name: "Contramar", day: "thu", time: "18:00", cat: "com", lat: 19.4178, lng: -99.1689, addr: "Calle de Durango 200, Roma Norte", reserved: true },
-    { name: "Tacos Chanito", day: "thu", time: "LATE", cat: "com", lat: 19.4144, lng: -99.1622, addr: "Roma Norte · late eats" },
-
-    // FRIDAY
-    { name: "Museo Nac. de Antropología", day: "fri", time: "11:30", cat: "act", lat: 19.4258, lng: -99.1862, addr: "Chapultepec" },
-    { name: "Cablecar · Chapultepec", day: "fri", time: "12:30", cat: "act", lat: 19.4192, lng: -99.1822, addr: "Bosque de Chapultepec" },
-    { name: "Licoreria Limantour", day: "fri", time: "16:00", cat: "beb", lat: 19.4163, lng: -99.1614, addr: "Av. Álvaro Obregón 106, Roma Norte", reserved: true },
-    { name: "Broka", day: "fri", time: "17:30", cat: "com", lat: 19.4170, lng: -99.1583, addr: "Roma Norte · aperitivos" },
-    { name: "ARENA MÉXICO · LUCHA LIBRE", day: "fri", time: "20:30", cat: "act", lat: 19.4221, lng: -99.1494, addr: "Doctores · MAIN EVENT", major: true },
-    { name: "Supra Rooftop", day: "fri", time: "22:30", cat: "beb", lat: 19.4163, lng: -99.1635, addr: "Roma Norte · rooftop" },
-    { name: "Hamburguesas a la Parrilla", day: "fri", time: "LATE", cat: "com", lat: 19.4156, lng: -99.1612, addr: "Roma Norte · late eats" },
-
-    // SATURDAY
-    { name: "Panadería Rosetta", day: "sat", time: "08:30", cat: "com", lat: 19.4159, lng: -99.1614, addr: "Colima 166, Roma Norte" },
-    { name: "Torito Lucas (UCL Final)", day: "sat", time: "10:00", cat: "act", lat: 19.4136, lng: -99.1612, addr: "Roma Norte · sports bar", major: true },
-    { name: "Tacos Don Juan", day: "sat", time: "12:00", cat: "com", lat: 19.4042, lng: -99.1718, addr: "Roma Sur · quesabirria" },
-    { name: "Taco Crawl", day: "sat", time: "12:30", cat: "com", lat: 19.4115, lng: -99.1670, addr: "Roma / Condesa" },
-    { name: "Mezcal Tasting", day: "sat", time: "14:00", cat: "beb", lat: 19.4205, lng: -99.1685, addr: "TBD · book ahead" },
-    { name: "Handshake Speakeasy", day: "sat", time: "18:00", cat: "beb", lat: 19.4287, lng: -99.1669, addr: "Juárez · book ahead" },
-    { name: "Tlecan", day: "sat", time: "18:30", cat: "beb", lat: 19.4163, lng: -99.1622, addr: "Roma Norte · mezcal bar" },
-    { name: "Paramo", day: "sat", time: "19:30", cat: "com", lat: 19.4189, lng: -99.1604, addr: "Roma Norte · dinner" },
-    { name: "Departamento", day: "sat", time: "23:00", cat: "beb", lat: 19.4232, lng: -99.1670, addr: "Roma / Juárez", nightclub: true, major: true },
-
-    // SUNDAY
-    { name: "Restaurante Cerrajería", day: "sun", time: "08:30", cat: "com", lat: 19.4290, lng: -99.1657, addr: "Av. Álvaro Obregón 228, Roma Norte", reserved: true },
-    { name: "El Hidalguense", day: "sun", time: "13:30", cat: "com", lat: 19.4144, lng: -99.1672, addr: "Roma Sur · goat birria" },
-    { name: "MEX · Benito Juárez T1", day: "sun", time: "DEPARTURES", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1 · wheels up", major: true },
-
-    // MAYBE SPOTS — backup options
-    { name: "Balmori Rooftop", maybe: true, cat: "beb", lat: 19.4140, lng: -99.1685, addr: "Roma Norte · rooftop bar" },
-    { name: "Cueva", maybe: true, cat: "beb", lat: 19.4195, lng: -99.1640, addr: "Roma Norte · bar" },
-    { name: "La Once Mil", maybe: true, cat: "com", lat: 19.4153, lng: -99.1719, addr: "Condesa · tacos" },
-    { name: "Taqueria Orinoco", maybe: true, cat: "com", lat: 19.4196, lng: -99.1657, addr: "Roma Norte · tacos 24h" },
-    { name: "Mi Compa Chava", maybe: true, cat: "com", lat: 19.4076, lng: -99.1761, addr: "Condesa · seafood" },
-    { name: "Café de Nadie", maybe: true, cat: "beb", lat: 19.4163, lng: -99.1631, addr: "Roma Norte · vinyl bar" },
-    { name: "Bar Oriente", maybe: true, cat: "beb", lat: 19.4250, lng: -99.1620, addr: "Juárez" },
-    { name: "Hotel rooftop Condesa", maybe: true, cat: "beb", lat: 19.4127, lng: -99.1747, addr: "Condesa · rooftop" },
-    { name: "El Cardenal", maybe: true, cat: "com", lat: 19.4337, lng: -99.1395, addr: "Centro · classic Mexican" },
-    { name: "Templo Mayor", maybe: true, cat: "act", lat: 19.4350, lng: -99.1316, addr: "Centro Histórico · ruins" },
-    { name: "Bellas Artes", maybe: true, cat: "act", lat: 19.4352, lng: -99.1413, addr: "Centro · museum" },
-    { name: "Zocalo", maybe: true, cat: "act", lat: 19.4326, lng: -99.1332, addr: "Centro · main square" },
-  ];
-
-  // Day labels for cards
-  const DAY_LABEL = { thu: "THU · 28", fri: "FRI · 29", sat: "SAT · 30", sun: "SUN · 31" };
-  const CAT_LABEL = { act: "ACTIVIDAD", beb: "BEBIDA", com: "COMIDA", air: "AIRPORT" };
+  // Venue data lives in js/venues.js (single source of truth).
+  // forMaster() excludes dayOnly fillers that only belong on day mini-maps.
+  const venues = window.VENUE_HELPERS.forMaster();
+  const { DAY_LABEL, CAT_LABEL } = window.VENUE_HELPERS;
 
   // ============================================================
   // STATE + FILTERS
@@ -562,7 +514,7 @@
       const icon = L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
       const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
       markers.push(m);
-      const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+      const gMaps = window.VENUE_HELPERS.googleMapsUrl(v);
       const dayBadge = v.maybe ? 'MAYBE SPOT' : (v.day ? DAY_LABEL[v.day] : '');
       const tagClass = v.maybe ? 'maybe' : v.cat;
       const tagLabel = v.maybe ? `MAYBE · ${CAT_LABEL[v.cat] || ''}` : (CAT_LABEL[v.cat] || '');

@@ -472,38 +472,32 @@
   </div>
 </div>
 
+<script src="js/venues.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  const venues = [
-    { name: "Museum Walk", time: "11:00", cat: "act", lat: 19.4185, lng: -99.1660, addr: "Roma Norte → Reforma" },
-    { name: "Museo Nac. de Antropología", time: "11:30", cat: "act", lat: 19.4258, lng: -99.1862, addr: "Chapultepec" },
-    { name: "Cablecar · Chapultepec", time: "12:30", cat: "act", lat: 19.4192, lng: -99.1822, addr: "Bosque de Chapultepec" },
-    { name: "Airbnb (rest)", time: "14:00", cat: "act", lat: 19.4173, lng: -99.1614, addr: "Roma Norte" },
-    { name: "Licoreria Limantour", time: "16:00 · RESERVED", cat: "beb", lat: 19.4163, lng: -99.1614, addr: "Av. Álvaro Obregón 106, Roma Norte" },
-    { name: "Broka", time: "17:30", cat: "com", lat: 19.4170, lng: -99.1583, addr: "Roma Norte" },
-    { name: "ARENA MÉXICO · LUCHA LIBRE", time: "20:30 · MAIN EVENT", cat: "main", lat: 19.4221, lng: -99.1494, addr: "Doctores" },
-    { name: "Supra Rooftop", time: "22:30", cat: "beb", lat: 19.4163, lng: -99.1635, addr: "Roma Norte" },
-    { name: "Hamburguesas a la Parrilla", time: "LATE", cat: "com", lat: 19.4156, lng: -99.1612, addr: "Roma Norte" },
-  ];
+  const venues = window.VENUE_HELPERS.forDay('fri');
 
   const map = L.map('map', { scrollWheelZoom: false, attributionControl: false })
     .setView([19.42, -99.165], 13);
-
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '' }).addTo(map);
   L.control.attribution({ prefix: false, position: 'bottomleft' }).addAttribution('© OSM').addTo(map);
 
   venues.forEach(v => {
+    // Major events (Arena México) get the oversized yellow "main" pin from CSS.
+    const size = v.major ? 30 : 24;
+    const pinClasses = `pin ${v.cat}${v.major ? ' main' : ''}`;
     const icon = L.divIcon({
-      html: `<div class="pin ${v.cat}"></div>`,
+      html: `<div class="${pinClasses}"></div>`,
       className: '',
-      iconSize: [v.cat === 'main' ? 30 : 24, v.cat === 'main' ? 30 : 24],
-      iconAnchor: [v.cat === 'main' ? 15 : 12, v.cat === 'main' ? 15 : 12]
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2],
     });
     const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
-    const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+    const gMaps = window.VENUE_HELPERS.googleMapsUrl(v);
+    const timeSuffix = v.reserved ? ' · RESERVED' : (v.major ? ' · MAIN EVENT' : '');
     m.bindPopup(`
       <div class="popup-name">${v.name}</div>
-      <div class="popup-meta"><span class="popup-time">${v.time}</span></div>
+      <div class="popup-meta"><span class="popup-time">${v.time}${timeSuffix}</span></div>
       <div class="popup-meta">${v.addr}</div>
       <a class="popup-link" href="${gMaps}" target="_blank">OPEN IN MAPS →</a>
     `);

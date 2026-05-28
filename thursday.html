@@ -544,43 +544,35 @@
 
 </div>
 
+<script src="js/venues.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // Approximate venue coordinates for Thursday
-  const venues = [
-    { name: "MEX · Benito Juárez T1", time: "ARRIVALS", cat: "air", lat: 19.4361, lng: -99.0782, addr: "Terminal 1" },
-    { name: "Filigrana", time: "13:00 · Lunch", cat: "com", lat: 19.4196, lng: -99.1620, addr: "Roma Norte" },
-    { name: "Contramar", time: "18:00 · Dinner", cat: "com", lat: 19.4178, lng: -99.1689, addr: "Calle de Durango 200, Roma Norte" },
-    { name: "Tacos Chanito", time: "LATE · Antojitos", cat: "com", lat: 19.4144, lng: -99.1622, addr: "Roma Norte" },
-  ];
+  const venues = window.VENUE_HELPERS.forDay('thu');
 
   const map = L.map('map', { scrollWheelZoom: false, attributionControl: false })
     .setView([19.4250, -99.1300], 12);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19, attribution: ''
-  }).addTo(map);
-
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '' }).addTo(map);
   L.control.attribution({ prefix: false, position: 'bottomleft' }).addAttribution('© OSM').addTo(map);
 
   venues.forEach(v => {
+    const size = v.major ? 30 : 24;
     const icon = L.divIcon({
-      html: `<div class="pin ${v.cat}"></div>`,
+      html: `<div class="pin ${v.cat}${v.major ? ' major' : ''}"></div>`,
       className: '',
-      iconSize: [24, 24],
-      iconAnchor: [12, 12]
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
     });
     const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
-    const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+    const gMaps = window.VENUE_HELPERS.googleMapsUrl(v);
+    const timeSuffix = v.reserved ? ' · RESERVED' : '';
     m.bindPopup(`
       <div class="popup-name">${v.name}</div>
-      <div class="popup-meta"><span class="popup-time">${v.time}</span></div>
+      <div class="popup-meta"><span class="popup-time">${v.time}${timeSuffix}</span></div>
       <div class="popup-meta">${v.addr}</div>
       <a class="popup-link" href="${gMaps}" target="_blank">OPEN IN MAPS →</a>
     `);
   });
 
-  // Fit bounds to all markers
   const group = new L.featureGroup(venues.map(v => L.marker([v.lat, v.lng])));
   map.fitBounds(group.getBounds().pad(0.2));
 </script>

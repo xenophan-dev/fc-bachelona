@@ -412,20 +412,10 @@
 
 </div>
 
+<script src="js/venues.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  const venues = [
-    { name: "Panadería Rosetta", time: "08:30", cat: "com", lat: 19.4159, lng: -99.1614, addr: "Colima 166, Roma Norte" },
-    { name: "Torito Lucas (UCL Final)", time: "10:00 · FEATURED", cat: "act", lat: 19.4136, lng: -99.1612, addr: "Roma Norte" },
-    { name: "Tacos Don Juan", time: "12:00", cat: "com", lat: 19.4042, lng: -99.1718, addr: "Roma Sur" },
-    { name: "Taco Crawl", time: "12:30", cat: "com", lat: 19.4115, lng: -99.1670, addr: "Roma / Condesa" },
-    { name: "Mezcal Tasting", time: "14:00", cat: "beb", lat: 19.4205, lng: -99.1685, addr: "TBD · book ahead" },
-    { name: "Airbnb (rest)", time: "16:00", cat: "act", lat: 19.4173, lng: -99.1614, addr: "Roma Norte" },
-    { name: "Handshake Speakeasy", time: "18:00", cat: "beb", lat: 19.4287, lng: -99.1669, addr: "Juárez · book ahead" },
-    { name: "Tlecan", time: "18:30", cat: "beb", lat: 19.4163, lng: -99.1622, addr: "Roma Norte" },
-    { name: "Paramo", time: "19:30", cat: "com", lat: 19.4189, lng: -99.1604, addr: "Roma Norte" },
-    { name: "Departamento", time: "23:00", cat: "beb", lat: 19.4232, lng: -99.1670, addr: "Roma / Juárez · nightclub" },
-  ];
+  const venues = window.VENUE_HELPERS.forDay('sat');
 
   const map = L.map('map', { scrollWheelZoom: false, attributionControl: false })
     .setView([19.418, -99.165], 13);
@@ -433,12 +423,23 @@
   L.control.attribution({ prefix: false, position: 'bottomleft' }).addAttribution('© OSM').addTo(map);
 
   venues.forEach(v => {
-    const icon = L.divIcon({ html: `<div class="pin ${v.cat}"></div>`, className: '', iconSize: [24,24], iconAnchor: [12,12] });
+    const size = v.major ? 30 : 24;
+    const icon = L.divIcon({
+      html: `<div class="pin ${v.cat}${v.major ? ' major' : ''}"></div>`,
+      className: '',
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2],
+    });
     const m = L.marker([v.lat, v.lng], { icon }).addTo(map);
-    const gMaps = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.name + ' ' + v.addr)}`;
+    const gMaps = window.VENUE_HELPERS.googleMapsUrl(v);
+    const tags = [];
+    if (v.major) tags.push('FEATURED');
+    if (v.reserved) tags.push('RESERVED');
+    if (v.nightclub) tags.push('NIGHTCLUB');
+    const timeSuffix = tags.length ? ' · ' + tags.join(' · ') : '';
     m.bindPopup(`
       <div class="popup-name">${v.name}</div>
-      <div class="popup-meta"><span class="popup-time">${v.time}</span></div>
+      <div class="popup-meta"><span class="popup-time">${v.time}${timeSuffix}</span></div>
       <div class="popup-meta">${v.addr}</div>
       <a class="popup-link" href="${gMaps}" target="_blank">OPEN IN MAPS →</a>
     `);
