@@ -1,0 +1,94 @@
+# CDMX Bach '26 — project notes for Claude Code
+
+Static, mobile-first itinerary site for Edwin's bachelor party in Mexico City
+(May 28–31, 2026). Plain HTML/CSS/JS, no framework, no build step. Deployed to
+the Vercel project **cdmxbach**, live at **https://www.fcbachelona.com**.
+
+- Venue data: `js/venues.js` (`window.VENUES` + `window.VENUE_HELPERS`) is the
+  single source of truth for every map pin. All map pages read from it.
+- Photo data: `js/photos.js` (`window.PHOTOS`) drives the El Álbum gallery
+  (`photos.html`). Image files live in `assets/Photos/`.
+- Deploy: `vercel deploy --prod` from this folder (already linked to cdmxbach).
+
+---
+
+## Photo intake workflow (El Álbum)
+
+**When José sends one or more images, treat each as a new photo for El Álbum**
+(`photos.html`) unless he says otherwise. The goal: he texts "here are 5 from
+last night," and the photos appear in the gallery with him answering as little
+as possible.
+
+### Steps
+
+1. **Get the file onto disk.** Images pasted into Claude Code are embedded in
+   the session transcript as base64, not saved as files. To recover one:
+   - Find the newest transcript: `ls -t ~/.claude/projects/-Users-sirpodrick-Desktop-Projects-CDMX/*.jsonl | head -1`
+   - Decode the most recent embedded image(s) — walk the JSON for objects with
+     `type:"image"` and `source.type:"base64"`, `base64 -D` the `data` into a
+     temp file. (See git history of this ticket for a working Python snippet.)
+   - **Verify** you grabbed the right image by viewing it (Read tool) before
+     saving — there may be several embedded images (old screenshots, etc.); the
+     one you want is usually the largest/most recent JPEG.
+
+2. **Read EXIF metadata first** — don't ask for what the photo already tells
+   you. Tools, in order of preference:
+   - `exiftool <file>` if installed (best; gives DateTimeOriginal + GPS).
+   - Fallback: `mdls -name kMDItemContentCreationDate -name kMDItemLatitude -name kMDItemLongitude <file>` and `sips -g all <file>`.
+   - **Reality check:** images pasted into chat almost always have EXIF
+     stripped (no GPS, unreliable date). When that's the case, ask José for
+     date/time/location. If he wants GPS/EXIF preserved, he should share the
+     original files via a synced folder (iCloud/Dropbox) instead of pasting.
+
+3. **Derive the day from the capture date** automatically:
+   May 28 → `thu`, 29 → `fri`, 30 → `sat`, 31 → `sun`. If the date is outside
+   May 28–31, flag it and confirm with José.
+
+4. **Reverse-geocode GPS** (if present) to a venue/neighbourhood for the
+   `location` field via Nominatim (same approach as venue geocoding). If no GPS,
+   ask for location (optional — don't block on it).
+
+5. **Ask José only for the missing required fields** — almost always just the
+   **caption** and the **category**. Batch the questions; never one at a time.
+   Example: *"Got 3 photos, looks like Friday night. For each, what's the
+   caption and is it comida / bebida / actividad / crew?"*
+
+6. **Categories:** `com` (comida), `beb` (bebida), `act` (actividad),
+   `crew` (el equipo). A photo may have **more than one** — pass an array
+   (e.g. a group shot at dinner = `["crew","com"]`); it then shows under both
+   category filters.
+
+7. **Auto-assign — never ask:**
+   - `rot`: a small random tilt, roughly −2.5° to +2.5°.
+   - `taped`: `true` for about 1 in 4 photos.
+
+8. **Optimize + save the image** into `assets/Photos/` with a sensible
+   kebab-case filename (e.g. `lucha-masks.jpg`). Downscale to ~1600px longest
+   side and re-encode JPEG ~quality 72 so the page stays fast on mobile:
+   `sips -Z 1600 -s format jpeg -s formatOptions 72 <src> --out assets/Photos/<name>.jpg`
+
+9. **Add the metadata entry** to `js/photos.js` (`window.PHOTOS`) with:
+   `img` (path), `cap`, `cat` (string or array), `date` (e.g. "MAY 29"),
+   `time` (e.g. "21:40", or "" if unknown), `day`, optional `location`,
+   plus auto `rot` and `taped`.
+
+10. **Deploy and confirm.** `vercel deploy --prod`, then tell José what was
+    added and that it's live (the gallery updates within minutes).
+
+### photos.js entry shape
+
+```js
+{
+  img: "assets/Photos/lucha-masks.jpg",
+  cap: "Arena México · máscaras everywhere",
+  cat: ["act"],            // or e.g. ["crew","com"]
+  date: "MAY 29", time: "20:45", day: "fri",
+  location: "Arena México, Doctores",
+  rot: 1.6, taped: true,
+}
+```
+
+### Don't
+- Don't ask about rotation or tape — auto-assign them.
+- Don't invent a caption or category — those come from José.
+- Don't commit full-resolution phone photos (multi-MB) — always downscale first.

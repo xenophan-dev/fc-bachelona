@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>El Álbum · CDMX Bach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Caveat:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #E8DCC0; --paper-light: #FBF4DF; --ink: #1A1410; --muted: #5C4F35;
+    --gold: #C9A877; --stamp: #FF8A2B;
+    --c-act: #1A8F4F; --c-beb: #B11839; --c-com: #D67B1A; --c-crew: #1E3A5F;
+    --c-thu: #1E3A5F; --c-fri: #C8181C; --c-sat: #1B5E20; --c-sun: #B5613C;
+  }
+  html, body { width: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse at 30% 10%, rgba(0,0,0,0.05) 0%, transparent 55%),
+      radial-gradient(ellipse at 75% 85%, rgba(0,0,0,0.06) 0%, transparent 55%),
+      #E8DCC0;
+    font-family: 'Inter', sans-serif; color: var(--ink); padding-bottom: 60px; position: relative;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(26,20,16,0.05) 1px, transparent 0);
+    background-size: 3px 3px; pointer-events: none; mix-blend-mode: multiply; z-index: 0;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(232, 220, 192, 0.96); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--ink); padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px; font-family: 'IBM Plex Mono', monospace;
+  }
+  nav a.back { color: var(--ink); text-decoration: none; font-size: 16px; letter-spacing: 0.2em; }
+  nav .days { margin-left: auto; display: flex; gap: 11px; font-size: 11px; letter-spacing: 0.25em; font-weight: 700; }
+  nav .days a { color: var(--muted); text-decoration: none; padding: 4px 2px; border-bottom: 2px solid transparent; }
+  nav .days a.current { color: var(--ink); border-bottom-color: var(--ink); }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 26px 16px 0; position: relative; z-index: 1; }
+  .hero { text-align: center; margin-bottom: 16px; }
+  .hero .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.4em; text-transform: uppercase; }
+  .hero h1 { font-family: 'Fraunces', serif; font-style: italic; font-weight: 900; font-size: clamp(58px, 15vw, 96px); line-height: 0.9; margin: 6px 0 4px; letter-spacing: -0.025em; }
+  .hero .sub { font-family: 'Caveat', cursive; font-size: 26px; color: var(--muted); font-weight: 600; }
+  .filter-block { margin: 16px 0 6px; }
+  .filter-label { font-family: 'IBM Plex Mono', monospace; font-size: 9px; letter-spacing: 0.35em; color: var(--muted); font-weight: 700; text-align: center; margin-bottom: 8px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .chip { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; padding: 6px 12px; border: 1.5px solid var(--ink); background: var(--paper-light); color: var(--ink); cursor: pointer; transition: all 0.15s ease; user-select: none; }
+  .chip:hover { transform: translateY(-1px); }
+  .chip.active { background: var(--ink); color: var(--paper-light); }
+  .chip.f-com.active { background: var(--c-com); border-color: var(--c-com); }
+  .chip.f-beb.active { background: var(--c-beb); border-color: var(--c-beb); }
+  .chip.f-act.active { background: var(--c-act); border-color: var(--c-act); }
+  .chip.f-crew.active { background: var(--c-crew); border-color: var(--c-crew); }
+  .chip.d-thu.active { background: var(--c-thu); border-color: var(--c-thu); color: #fff; }
+  .chip.d-fri.active { background: var(--c-fri); border-color: var(--c-fri); color: #fff; }
+  .chip.d-sat.active { background: var(--c-sat); border-color: var(--c-sat); color: #fff; }
+  .chip.d-sun.active { background: var(--c-sun); border-color: var(--c-sun); color: #fff; }
+  .chip .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .count { text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.25em; margin: 14px 0 22px; }
+  .album { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 14px; }
+  @media (min-width: 640px) { .album { grid-template-columns: repeat(3, 1fr); gap: 28px 18px; } }
+  .polaroid { background: #FFFDF8; padding: 9px 9px 0; box-shadow: 0 5px 14px rgba(0,0,0,0.26), 0 1px 0 rgba(0,0,0,0.1); transform: rotate(var(--rot, 0deg)); transition: transform 0.2s ease, box-shadow 0.2s ease; width: 100%; position: relative; cursor: pointer; }
+  .polaroid:hover { transform: rotate(0deg) scale(1.05); box-shadow: 0 14px 30px rgba(0,0,0,0.36); z-index: 5; }
+  .polaroid .photo { width: 100%; aspect-ratio: 1 / 1; background-size: cover; background-position: center; background-color: #ccc; filter: saturate(0.92) contrast(1.02); position: relative; }
+  .polaroid .datestamp { position: absolute; bottom: 5px; right: 7px; font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--stamp); text-shadow: 0 0 4px rgba(255,138,43,0.9), 0 0 1px rgba(0,0,0,0.4); letter-spacing: 0.02em; }
+  .polaroid figcaption { font-family: 'Caveat', cursive; font-size: 18px; font-weight: 600; color: #2A2218; text-align: center; padding: 8px 4px 13px; line-height: 1.1; }
+  .polaroid .cat-dot { position: absolute; top: 15px; right: 15px; width: 13px; height: 13px; border-radius: 50%; border: 2px solid #FFFDF8; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+  .polaroid.com .cat-dot { background: var(--c-com); }
+  .polaroid.beb .cat-dot { background: var(--c-beb); }
+  .polaroid.act .cat-dot { background: var(--c-act); }
+  .polaroid.crew .cat-dot { background: var(--c-crew); }
+  .polaroid.taped::before { content: ""; position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(-3deg); width: 58px; height: 20px; background: rgba(201, 168, 119, 0.45); border: 1px solid rgba(180, 150, 100, 0.3); }
+  .lightbox { position: fixed; inset: 0; z-index: 200; background: rgba(10, 7, 4, 0.94); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; }
+  .lightbox.open { display: flex; }
+  .lb-content { max-width: 700px; width: 100%; text-align: center; }
+  .lb-frame { background: #FFFDF8; padding: 14px 14px 0; box-shadow: 0 20px 50px rgba(0,0,0,0.6); display: inline-block; max-width: 100%; position: relative; }
+  .lb-img { display: block; max-width: 100%; max-height: 64vh; width: auto; background-color: #ccc; filter: saturate(0.92) contrast(1.02); }
+  .lb-datestamp { position: absolute; bottom: 8px; right: 22px; font-family: 'Share Tech Mono', monospace; font-size: 15px; color: var(--stamp); text-shadow: 0 0 6px rgba(255,138,43,0.9); }
+  .lb-caption { font-family: 'Caveat', cursive; font-weight: 700; font-size: 30px; color: #2A2218; padding: 12px 8px 16px; }
+  .lb-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.25em; color: var(--paper); margin-top: 14px; }
+  .lb-meta .pill { display: inline-block; padding: 4px 10px; border: 1px solid currentColor; margin: 0 4px 6px; }
+  .lb-close, .lb-prev, .lb-next { position: fixed; background: rgba(255,253,248,0.12); border: 1.5px solid rgba(255,253,248,0.5); color: var(--paper); font-size: 26px; width: 46px; height: 46px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s ease; z-index: 210; }
+  .lb-close:hover, .lb-prev:hover, .lb-next:hover { background: rgba(255,253,248,0.28); }
+  .lb-close { top: 18px; right: 18px; }
+  .lb-prev { left: 14px; top: 50%; transform: translateY(-50%); }
+  .lb-next { right: 14px; top: 50%; transform: translateY(-50%); }
+  @media (max-width: 600px) {
+    .lb-prev { left: 8px; bottom: 24px; top: auto; transform: none; }
+    .lb-next { right: 8px; bottom: 24px; top: auto; transform: none; }
+  }
+  .empty { grid-column: 1 / -1; text-align: center; padding: 48px 20px; border: 2px dashed var(--muted); font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--muted); letter-spacing: 0.18em; line-height: 1.9; }
+  .empty .big { font-family: 'Caveat', cursive; font-size: 28px; letter-spacing: 0; color: var(--ink); display: block; margin-bottom: 8px; }
+  .footer { margin-top: 28px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.3em; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="back">← BACH</a>
+  <div class="days">
+    <a href="thursday.html">THU</a>
+    <a href="friday.html">FRI</a>
+    <a href="saturday.html">SAT</a>
+    <a href="sunday.html">SUN</a>
+    <a href="map.html">MAP</a>
+    <a href="photos.html" class="current">PICS</a>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">── cdmx bach '26 · memories ──</div>
+    <h1>El Álbum</h1>
+    <div class="sub">96 hours, one roll of film</div>
+  </div>
+
+  <div class="filter-block">
+    <div class="filter-label">BY CATEGORY</div>
+    <div class="filters" id="catFilters">
+      <div class="chip active" data-cat="all">ALL</div>
+      <div class="chip f-com" data-cat="com"><span class="dot" style="background: var(--c-com)"></span>COMIDA</div>
+      <div class="chip f-beb" data-cat="beb"><span class="dot" style="background: var(--c-beb)"></span>BEBIDA</div>
+      <div class="chip f-act" data-cat="act"><span class="dot" style="background: var(--c-act)"></span>ACTIVIDAD</div>
+      <div class="chip f-crew" data-cat="crew"><span class="dot" style="background: var(--c-crew)"></span>EL EQUIPO</div>
+    </div>
+  </div>
+
+  <div class="filter-block">
+    <div class="filter-label">BY DAY</div>
+    <div class="filters" id="dayFilters">
+      <div class="chip active" data-day="all">ALL DAYS</div>
+      <div class="chip d-thu" data-day="thu">THU</div>
+      <div class="chip d-fri" data-day="fri">FRI</div>
+      <div class="chip d-sat" data-day="sat">SAT</div>
+      <div class="chip d-sun" data-day="sun">SUN</div>
+    </div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div class="album" id="album"></div>
+
+  <div class="footer">─── EDWIN'S BACH · CDMX '26 ───</div>
+</div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-close" id="lbClose">✕</button>
+  <button class="lb-prev" id="lbPrev">‹</button>
+  <button class="lb-next" id="lbNext">›</button>
+  <div class="lb-content">
+    <div class="lb-frame">
+      <img class="lb-img" id="lbImg" alt="" />
+      <span class="lb-datestamp" id="lbStamp"></span>
+    </div>
+    <div class="lb-caption" id="lbCap"></div>
+    <div class="lb-meta" id="lbMeta"></div>
+  </div>
+</div>
+
+<script src="js/photos.js"></script>
+<script>
+  const photos = window.PHOTOS || [];
+
+  const CAT_LABEL = { com: "COMIDA", beb: "BEBIDA", act: "ACTIVIDAD", crew: "EL EQUIPO" };
+  const DAY_LABEL = { thu: "THU · MAY 28", fri: "FRI · MAY 29", sat: "SAT · MAY 30", sun: "SUN · MAY 31" };
+  const CAT_COLOR = { com: "var(--c-com)", beb: "var(--c-beb)", act: "var(--c-act)", crew: "var(--c-crew)" };
+
+  const state = { cat: "all", day: "all" };
+  let currentVisible = [];
+  let lbIndex = 0;
+
+  const cats = p => Array.isArray(p.cat) ? p.cat : [p.cat];
+  function stampText(p) { return "'26 " + p.date.replace('MAY ', '05 ') + (p.time ? " " + p.time : ""); }
+
+  function render() {
+    currentVisible = photos.filter(p =>
+      (state.cat === "all" || cats(p).includes(state.cat)) &&
+      (state.day === "all" || p.day === state.day)
+    );
+    const album = document.getElementById('album');
+
+    if (currentVisible.length === 0) {
+      const msg = photos.length === 0
+        ? '<span class="big">El rollo está en blanco</span>No photos yet — they land here during the trip.'
+        : '<span class="big">Nada por aquí</span>No photos match these filters.';
+      album.innerHTML = '<div class="empty">' + msg + '</div>';
+      document.getElementById('count').textContent = currentVisible.length + ' OF ' + photos.length + ' PHOTOS';
+      return;
+    }
+
+    album.innerHTML = currentVisible.map((p, i) => {
+      const firstCat = cats(p)[0];
+      return '<figure class="polaroid ' + firstCat + ' ' + (p.taped ? 'taped' : '') + '" style="--rot: ' + (p.rot || 0) + 'deg;" data-idx="' + i + '">' +
+        '<div class="photo" style="background-image: url(\'' + p.img + '\');">' +
+          '<span class="datestamp">' + stampText(p) + '</span>' +
+        '</div>' +
+        '<span class="cat-dot"></span>' +
+        '<figcaption>' + p.cap + '</figcaption>' +
+      '</figure>';
+    }).join('');
+
+    const parts = [];
+    if (state.cat !== "all") parts.push(CAT_LABEL[state.cat]);
+    if (state.day !== "all") parts.push(DAY_LABEL[state.day].split(' · ')[0]);
+    document.getElementById('count').textContent =
+      currentVisible.length + ' OF ' + photos.length + ' PHOTOS' + (parts.length ? ' · ' + parts.join(' · ') : '');
+
+    album.querySelectorAll('.polaroid').forEach(el => {
+      el.addEventListener('click', () => openLightbox(parseInt(el.dataset.idx)));
+    });
+  }
+
+  const lb = document.getElementById('lightbox');
+  function openLightbox(i) { lbIndex = i; showLightbox(); lb.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  function showLightbox() {
+    const p = currentVisible[lbIndex];
+    if (!p) return;
+    document.getElementById('lbImg').src = p.img;
+    document.getElementById('lbStamp').textContent = stampText(p);
+    document.getElementById('lbCap').textContent = p.cap;
+    const catPills = cats(p).map(c =>
+      '<span class="pill" style="color:' + CAT_COLOR[c] + '">' + CAT_LABEL[c] + '</span>').join('');
+    document.getElementById('lbMeta').innerHTML =
+      catPills +
+      '<span class="pill">' + DAY_LABEL[p.day] + '</span>' +
+      '<span class="pill">' + (p.time || '') + '</span>';
+  }
+  function closeLightbox() { lb.classList.remove('open'); document.body.style.overflow = ''; }
+  function nav(dir) { lbIndex = (lbIndex + dir + currentVisible.length) % currentVisible.length; showLightbox(); }
+
+  document.getElementById('lbClose').addEventListener('click', closeLightbox);
+  document.getElementById('lbPrev').addEventListener('click', e => { e.stopPropagation(); nav(-1); });
+  document.getElementById('lbNext').addEventListener('click', e => { e.stopPropagation(); nav(1); });
+  lb.addEventListener('click', e => { if (e.target === lb) closeLightbox(); });
+  document.addEventListener('keydown', e => {
+    if (!lb.classList.contains('open')) return;
+    if (e.key === 'Escape') closeLightbox();
+    if (e.key === 'ArrowLeft') nav(-1);
+    if (e.key === 'ArrowRight') nav(1);
+  });
+
+  document.getElementById('catFilters').addEventListener('click', e => {
+    const chip = e.target.closest('.chip'); if (!chip) return;
+    document.querySelectorAll('#catFilters .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active'); state.cat = chip.dataset.cat; render();
+  });
+  document.getElementById('dayFilters').addEventListener('click', e => {
+    const chip = e.target.closest('.chip'); if (!chip) return;
+    document.querySelectorAll('#dayFilters .chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active'); state.day = chip.dataset.day; render();
+  });
+
+  render();
+</script>
+
+</body>
+</html>
