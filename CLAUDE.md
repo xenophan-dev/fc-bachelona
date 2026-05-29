@@ -8,8 +8,32 @@ the Vercel project **cdmxbach**, live at **https://www.fcbachelona.com**.
   single source of truth for every map pin. All map pages read from it.
 - Photo data: `js/photos.js` (`window.PHOTOS`) drives the El Álbum gallery
   (`photos.html`). Image files live in `assets/Photos/`.
-- Expense data: `js/expenses.js` (`window.CREW` + `window.EXPENSES`) drives La
-  Cuenta (`cuenta.html`); balances + settlement computed in `js/cuenta.js`.
+- Expense data: `js/expenses.js` (`window.CREW` + `window.EXPENSES`) is the
+  committed **fallback snapshot**. When the API is provisioned, La Cuenta reads
+  live data from Vercel KV via `/api/expenses.mjs`; balances + settlement
+  computed in `js/cuenta.js`. The crew can self-add expenses in natural language
+  ("Mike got drinks for Brian and me, ~$600") — Claude Haiku parses it and they
+  confirm before it's saved.
+
+## La Cuenta backend (/api/expenses.mjs)
+
+A Node serverless function. Degrades gracefully: with no env vars it returns
+`source:"static"` and the page falls back to `js/expenses.js`, so the site
+never breaks. To turn on self-serve adds, set these in the Vercel project
+(Settings → Environment Variables), then redeploy:
+
+- `ANTHROPIC_API_KEY` — Claude API key (parses the natural-language expense).
+- `CREW_PIN` — shared code the crew enters to add an expense.
+- Vercel KV: provision **Storage → KV** in the Vercel dashboard and link it to
+  the `cdmxbach` project. It auto-injects `KV_REST_API_URL` / `KV_REST_API_TOKEN`
+  (the function also accepts `UPSTASH_REDIS_REST_URL` / `_TOKEN`).
+
+KV is seeded from the `SEED` array in the function on first read (mirrors the
+current expenses.js). After that, KV is the source of truth — keep `expenses.js`
+as a rough offline fallback, but the live totals come from KV.
+
+Model: `claude-haiku-4-5`, structured output via forced tool-use
+(`record_expense`), names validated against `CREW`. See the claude-api skill.
 - Deploy: `vercel deploy --prod` from this folder (already linked to cdmxbach).
 
 ---
