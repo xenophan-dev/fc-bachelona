@@ -38,7 +38,30 @@
     return tx;
   }
 
-  window.CUENTA = { compute, settle };
+  // Pairwise net debts: for each pair, who owes whom across all expenses,
+  // netted bilaterally. Shows the real "you owe X / Y owes you" picture
+  // (unlike settle(), which minimizes total payments and can hide that).
+  function pairwise(expenses) {
+    const owe = {};
+    const add = (a, b, amt) => { if (a === b) return; owe[a] = owe[a] || {}; owe[a][b] = (owe[a][b] || 0) + amt; };
+    for (const e of expenses) {
+      const share = e.amountMXN / e.split.length;
+      for (const n of e.split) if (n !== e.paidBy) add(n, e.paidBy, share);
+    }
+    const all = new Set();
+    for (const e of expenses) { all.add(e.paidBy); e.split.forEach(n => all.add(n)); }
+    const arr = [...all], pairs = [];
+    for (let i = 0; i < arr.length; i++) for (let j = i + 1; j < arr.length; j++) {
+      const a = arr[i], b = arr[j];
+      const ab = (owe[a] && owe[a][b]) || 0, ba = (owe[b] && owe[b][a]) || 0;
+      const net = Math.round((ab - ba) * 100) / 100;
+      if (net > 0.005) pairs.push({ from: a, to: b, amount: net });
+      else if (net < -0.005) pairs.push({ from: b, to: a, amount: -net });
+    }
+    return pairs.sort((x, y) => y.amount - x.amount);
+  }
+
+  window.CUENTA = { compute, settle, pairwise };
 
   // ───────────────────────── DOM ─────────────────────────
   if (typeof document === "undefined") return;
@@ -53,7 +76,6 @@
     const expenses = DATA.expenses;
     const crew = DATA.crew;
     const net = compute(expenses, crew);
-    const tx = settle(net);
     const total = expenses.reduce((s, e) => s + e.amountMXN, 0);
 
     // Header totals
@@ -65,22 +87,8 @@
         ' · ' + usd(total) + ' · ' + (RATE_LIVE ? "live" : "est.") + ' rate ' + RATE.toFixed(2) + '</div>';
     }
 
-    // Settle up — who owes whom
-    const setEl = document.getElementById("settle");
-    if (setEl) {
-      if (tx.length === 0) {
-        setEl.innerHTML = '<div class="cu-even">— all square —</div>';
-      } else {
-        setEl.innerHTML = tx.map(t =>
-          '<div class="cu-tx">' +
-            '<span class="cu-from">' + t.from + '</span>' +
-            '<span class="cu-arrow">→</span>' +
-            '<span class="cu-to">' + t.to + '</span>' +
-            '<span class="cu-amt">' + peso(t.amount) + ' <span class="cu-u">' + usd(t.amount) + '</span></span>' +
-          '</div>'
-        ).join("");
-      }
-    }
+    // Settle up — rendered separately so the mode toggle can re-render it alone.
+    renderSettle();
 
     // Balances per person (only those involved)
     const balEl = document.getElementById("balances");
@@ -111,6 +119,60 @@
         '</div>';
       }).join("");
     }
+  }
+
+  // Settle-up view state: "min" = fewest payments; "person" = pairwise by person.
+  let settleMode = "min";
+  let settlePerson = "all";
+
+  const txRow = t =>
+    '<div class="cu-tx">' +
+      '<span class="cu-from">' + t.from + '</span>' +
+      '<span class="cu-arrow">→</span>' +
+      '<span class="cu-to">' + t.to + '</span>' +
+      '<span class="cu-amt">' + peso(t.amount) + ' <span class="cu-u">' + usd(t.amount) + '</span></span>' +
+    '</div>';
+  const evenRow = '<div class="cu-even">— all square —</div>';
+
+  function renderSettle() {
+    const setEl = document.getElementById("settle");
+    if (!setEl) return;
+    if (settleMode === "min") {
+      const tx = settle(compute(DATA.expenses, DATA.crew));
+      setEl.innerHTML = tx.length ? tx.map(txRow).join("") : evenRow;
+      return;
+    }
+    const pairs = pairwise(DATA.expenses);
+    if (settlePerson === "all") {
+      setEl.innerHTML = pairs.length ? pairs.map(txRow).join("") : evenRow;
+      return;
+    }
+    const owe = pairs.filter(p => p.from === settlePerson);
+    const owed = pairs.filter(p => p.to === settlePerson);
+    const none = '<div class="cu-even">— nothing —</div>';
+    setEl.innerHTML =
+      '<div class="settle-sub">' + settlePerson.toUpperCase() + ' OWES</div>' +
+      (owe.length ? owe.map(txRow).join("") : none) +
+      '<div class="settle-sub">OWES ' + settlePerson.toUpperCase() + '</div>' +
+      (owed.length ? owed.map(txRow).join("") : none);
+  }
+
+  function setupSettleToggle() {
+    const min = document.getElementById("modeMin");
+    const per = document.getElementById("modePerson");
+    const wrap = document.getElementById("settlePersonWrap");
+    const who = document.getElementById("settleWho");
+    if (!min || !per || !who) return;
+    (DATA.crew || []).forEach(n => who.appendChild(new Option(n, n)));
+    const sync = () => {
+      min.classList.toggle("on", settleMode === "min");
+      per.classList.toggle("on", settleMode === "person");
+      wrap.style.display = settleMode === "person" ? "block" : "none";
+      renderSettle();
+    };
+    min.addEventListener("click", () => { settleMode = "min"; sync(); });
+    per.addEventListener("click", () => { settleMode = "person"; sync(); });
+    who.addEventListener("change", () => { settlePerson = who.value; renderSettle(); });
   }
 
   // Pull live expenses from the API; if it's not set up (source !== "kv"),
@@ -199,6 +261,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     render();
+    setupSettleToggle();
     setupAddForm();
     loadLive();
     fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).then(d => {
