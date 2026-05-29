@@ -44,12 +44,14 @@
   if (typeof document === "undefined") return;
 
   let RATE = 17.34, RATE_LIVE = false; // MXN per USD
+  // Live data when the API is configured; falls back to the committed snapshot.
+  let DATA = { expenses: (window.EXPENSES || []).slice(), crew: (window.CREW || []) };
   const peso = n => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const usd = n => "~$" + (n / RATE).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + " USD";
 
   function render() {
-    const expenses = window.EXPENSES || [];
-    const crew = window.CREW || [];
+    const expenses = DATA.expenses;
+    const crew = DATA.crew;
     const net = compute(expenses, crew);
     const tx = settle(net);
     const total = expenses.reduce((s, e) => s + e.amountMXN, 0);
@@ -111,8 +113,88 @@
     }
   }
 
+  // Pull live expenses from the API; if it's not set up (source !== "kv"),
+  // we keep the committed snapshot already in DATA.
+  function loadLive() {
+    return fetch("/api/expenses").then(r => r.json()).then(d => {
+      if (d && d.source === "kv" && Array.isArray(d.expenses)) {
+        DATA.expenses = d.expenses;
+        if (Array.isArray(d.crew)) DATA.crew = d.crew;
+        render();
+      }
+    }).catch(() => {});
+  }
+
+  // ── Add-an-expense flow (parse → confirm → commit) ──
+  function setupAddForm() {
+    const form = document.getElementById("addForm");
+    if (!form) return;
+    const who = document.getElementById("addWho");
+    const pin = document.getElementById("addPin");
+    const text = document.getElementById("addText");
+    const askBtn = document.getElementById("addAsk");
+    const status = document.getElementById("addStatus");
+    const review = document.getElementById("addReview");
+
+    (DATA.crew || []).forEach(n => {
+      const o = document.createElement("option");
+      o.value = n; o.textContent = n; who.appendChild(o);
+    });
+
+    const say = (msg, kind) => { status.textContent = msg || ""; status.className = "add-status" + (kind ? " " + kind : ""); };
+    let proposal = null;
+
+    function showProposal(p) {
+      proposal = p;
+      const head = p.amountMXN / p.split.length;
+      review.innerHTML =
+        '<div class="add-prop">' +
+          '<div class="add-prop-desc">' + p.desc + '</div>' +
+          '<div class="add-prop-meta">' + peso(p.amountMXN) + ' · paid by <strong>' + p.paidBy + '</strong> · split ' +
+            p.split.length + ' ways (' + p.split.join(", ") + ') · ' + peso(head) + '/head</div>' +
+          '<div class="add-prop-actions">' +
+            '<button type="button" id="addConfirm" class="add-btn">✓ Confirm &amp; add</button>' +
+            '<button type="button" id="addCancel" class="add-btn ghost">✕ Cancel</button>' +
+          '</div>' +
+        '</div>';
+      review.style.display = "block";
+      document.getElementById("addCancel").onclick = () => { review.style.display = "none"; proposal = null; };
+      document.getElementById("addConfirm").onclick = commit;
+    }
+
+    function commit() {
+      say("Saving…");
+      fetch("/api/expenses", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "commit", pin: pin.value, expense: proposal }),
+      }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+        if (!ok) return say(d.error || "Couldn't save.", "err");
+        DATA.expenses = d.expenses; render();
+        review.style.display = "none"; text.value = ""; proposal = null;
+        say("Added ✓", "ok");
+      }).catch(() => say("Network error.", "err"));
+    }
+
+    askBtn.addEventListener("click", () => {
+      if (!who.value) return say("Pick your name first.", "err");
+      if (!pin.value) return say("Enter the crew PIN.", "err");
+      if (!text.value.trim()) return say("Describe the expense.", "err");
+      say("Asking Claude…");
+      review.style.display = "none";
+      fetch("/api/expenses", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "parse", pin: pin.value, submittedBy: who.value, text: text.value }),
+      }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+        if (!ok) return say(d.error || "Couldn't parse.", "err");
+        say(""); showProposal(d.proposal);
+      }).catch(() => say("Network error.", "err"));
+    });
+  }
+
   document.addEventListener("DOMContentLoaded", () => {
     render();
+    setupAddForm();
+    loadLive();
     fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).then(d => {
       if (d && d.rates && d.rates.MXN) { RATE = d.rates.MXN; RATE_LIVE = true; render(); }
     }).catch(() => {});

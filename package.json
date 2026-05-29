@@ -1,0 +1,10 @@
+{
+  "name": "fc-bachelona",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CDMX bach trip site — static, plus a small /api function for La Cuenta",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.68.0",
+    "@upstash/redis": "^1.34.3"
+  }
+}
