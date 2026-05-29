@@ -24,4 +24,13 @@ window.EXPENSES = [
     split: ["Izak", "Max", "Brian", "Mike", "Vishnu", "Edwin", "Jose"],
     note: "$9,702.50 + 15% tip · tostadas de atún, aguachile, pulpo, mezcalitas",
   },
+  {
+    id: "katz-kioto-thu",
+    date: "MAY 28", day: "thu",
+    desc: "Katz Kioto · bar",
+    amountMXN: 1727.00,
+    paidBy: "Izak",
+    split: ["Izak", "Max", "Brian", "Mike", "Edwin", "Vishnu"],
+    note: "Late-night drinks · Roma Norte",
+  },
 ];
