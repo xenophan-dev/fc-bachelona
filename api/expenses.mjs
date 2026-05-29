@@ -91,7 +91,8 @@ export default async function handler(req, res) {
 
   if (req.method === "POST") {
     const body = req.body || {};
-    if (body.action !== "commit") return res.status(400).json({ error: "Unknown action." });
+    const action = body.action;
+    if (action !== "commit" && action !== "delete") return res.status(400).json({ error: "Unknown action." });
     if (!process.env.CREW_PIN) return res.status(503).json({ error: "Adding isn't set up yet." });
     if (String(body.pin || "") !== String(process.env.CREW_PIN)) return res.status(401).json({ error: "Wrong PIN." });
     if (!redis) return res.status(503).json({ error: "Store not configured." });
@@ -99,15 +100,30 @@ export default async function handler(req, res) {
     const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.headers["x-real-ip"];
     if (!(await rateOk(redis, ip))) return res.status(429).json({ error: "Too many — slow down a sec." });
 
-    const exp = sanitize(body.expense);
-    if (!exp) return res.status(400).json({ error: "Check the amount and that a payer + at least one person are selected." });
+    if (action === "commit") {
+      const exp = sanitize(body.expense);
+      if (!exp) return res.status(400).json({ error: "Check the amount and that a payer + at least one person are selected." });
+      try {
+        const expenses = await loadExpenses(redis);
+        expenses.push(exp);
+        await redis.set(KV_KEY, expenses);
+        return res.status(200).json({ expenses });
+      } catch {
+        return res.status(500).json({ error: "Couldn't save. Try again." });
+      }
+    }
+
+    // delete
+    const id = String(body.id || "");
+    if (!id) return res.status(400).json({ error: "Missing id." });
     try {
       const expenses = await loadExpenses(redis);
-      expenses.push(exp);
-      await redis.set(KV_KEY, expenses);
-      return res.status(200).json({ expenses });
+      const filtered = expenses.filter(e => e.id !== id);
+      if (filtered.length === expenses.length) return res.status(404).json({ error: "Not found." });
+      await redis.set(KV_KEY, filtered);
+      return res.status(200).json({ expenses: filtered });
     } catch {
-      return res.status(500).json({ error: "Couldn't save. Try again." });
+      return res.status(500).json({ error: "Couldn't delete." });
     }
   }
 

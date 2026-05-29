@@ -110,14 +110,39 @@
     if (logEl) {
       logEl.innerHTML = expenses.slice().reverse().map(e => {
         const head = e.amountMXN / e.split.length;
-        return '<div class="cu-log">' +
-          '<div class="cu-log-top"><span class="cu-log-desc">' + e.desc + '</span>' +
-            '<span class="cu-log-amt">' + peso(e.amountMXN) + '</span></div>' +
+        return '<div class="cu-log" data-id="' + e.id + '">' +
+          '<div class="cu-log-top">' +
+            '<span class="cu-log-desc">' + e.desc + '</span>' +
+            '<span class="cu-log-amt">' + peso(e.amountMXN) + '</span>' +
+            '<button type="button" class="cu-log-del" title="Delete">✕</button>' +
+          '</div>' +
           '<div class="cu-log-meta">' + e.date + ' · paid by <strong>' + e.paidBy + '</strong> · split ' +
             e.split.length + ' ways · ' + peso(head) + '/head' +
             (e.note ? ' · ' + e.note : '') + '</div>' +
         '</div>';
       }).join("");
+      // Wire the delete buttons.
+      logEl.querySelectorAll(".cu-log-del").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const row = btn.closest(".cu-log");
+          const id = row && row.dataset.id;
+          const desc = row && row.querySelector(".cu-log-desc").textContent;
+          if (!id) return;
+          const pinEl = document.getElementById("addPin");
+          let pin = pinEl && pinEl.value;
+          if (!pin) pin = prompt('PIN to delete "' + desc + '":') || "";
+          if (!pin) return;
+          if (!confirm('Delete "' + desc + '"? This can\'t be undone.')) return;
+          btn.disabled = true;
+          fetch("/api/expenses", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "delete", pin, id }),
+          }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+            if (!ok) { btn.disabled = false; return alert(d.error || "Couldn't delete."); }
+            DATA.expenses = d.expenses; render();
+          }).catch(() => { btn.disabled = false; alert("Network error."); });
+        });
+      });
     }
   }
 
@@ -209,7 +234,7 @@
     const chips = {};
     crew.forEach(n => {
       const c = document.createElement("div");
-      c.className = "add-chip on"; c.textContent = n; c.dataset.name = n;
+      c.className = "add-chip"; c.textContent = n; c.dataset.name = n;
       c.addEventListener("click", () => c.classList.toggle("on"));
       chipsEl.appendChild(c); chips[n] = c;
     });
@@ -253,7 +278,9 @@
         if (!ok) return say(d.error || "Couldn't save.", "err");
         DATA.expenses = d.expenses; render();
         desc.value = ""; amt.value = ""; usd.textContent = "";
-        crew.forEach(n => chips[n].classList.add("on"));
+        // Reset chips to "none selected" + re-tick the payer's chip for the next entry.
+        crew.forEach(n => chips[n].classList.remove("on"));
+        if (paid.value && chips[paid.value]) chips[paid.value].classList.add("on");
         say("Added ✓ — totals updated", "ok");
       }).catch(() => say("Network error — try again.", "err"));
     });
