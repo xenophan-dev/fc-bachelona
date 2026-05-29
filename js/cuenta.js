@@ -146,8 +146,7 @@
     }
   }
 
-  // Settle-up view state: "min" = fewest payments; "person" = pairwise by person.
-  let settleMode = "min";
+  // Settle-up view state: pairwise by person, filterable to one name.
   let settlePerson = "all";
 
   const txRow = t =>
@@ -162,11 +161,6 @@
   function renderSettle() {
     const setEl = document.getElementById("settle");
     if (!setEl) return;
-    if (settleMode === "min") {
-      const tx = settle(compute(DATA.expenses, DATA.crew));
-      setEl.innerHTML = tx.length ? tx.map(txRow).join("") : evenRow;
-      return;
-    }
     const pairs = pairwise(DATA.expenses);
     if (settlePerson === "all") {
       setEl.innerHTML = pairs.length ? pairs.map(txRow).join("") : evenRow;
@@ -183,20 +177,9 @@
   }
 
   function setupSettleToggle() {
-    const min = document.getElementById("modeMin");
-    const per = document.getElementById("modePerson");
-    const wrap = document.getElementById("settlePersonWrap");
     const who = document.getElementById("settleWho");
-    if (!min || !per || !who) return;
+    if (!who) return;
     (DATA.crew || []).forEach(n => who.appendChild(new Option(n, n)));
-    const sync = () => {
-      min.classList.toggle("on", settleMode === "min");
-      per.classList.toggle("on", settleMode === "person");
-      wrap.style.display = settleMode === "person" ? "block" : "none";
-      renderSettle();
-    };
-    min.addEventListener("click", () => { settleMode = "min"; sync(); });
-    per.addEventListener("click", () => { settleMode = "person"; sync(); });
     who.addEventListener("change", () => { settlePerson = who.value; renderSettle(); });
   }
 
@@ -216,7 +199,6 @@
   function setupAddForm() {
     const form = document.getElementById("addForm");
     if (!form) return;
-    const who = document.getElementById("addWho");
     const paid = document.getElementById("addPaid");
     const desc = document.getElementById("addDesc");
     const amt = document.getElementById("addAmt");
@@ -226,10 +208,7 @@
     const status = document.getElementById("addStatus");
     const crew = DATA.crew || [];
 
-    crew.forEach(n => {
-      who.appendChild(new Option(n, n));
-      paid.appendChild(new Option(n, n));
-    });
+    crew.forEach(n => paid.appendChild(new Option(n, n)));
 
     const chips = {};
     crew.forEach(n => {
@@ -243,11 +222,7 @@
     document.getElementById("addAll").addEventListener("click", () => crew.forEach(n => chips[n].classList.add("on")));
     document.getElementById("addNone").addEventListener("click", () => crew.forEach(n => chips[n].classList.remove("on")));
 
-    // Picking "your name" defaults the payer to you and ensures you're in the split.
-    who.addEventListener("change", () => {
-      if (who.value) { paid.value = who.value; chips[who.value] && chips[who.value].classList.add("on"); }
-    });
-    // The payer always shares — keep their chip on.
+    // Picking the payer auto-ticks their chip — they always share.
     paid.addEventListener("change", () => { if (paid.value && chips[paid.value]) chips[paid.value].classList.add("on"); });
 
     amt.addEventListener("input", () => {
@@ -261,7 +236,7 @@
       const expense = {
         desc: desc.value.trim(),
         amountMXN: parseFloat(amt.value),
-        paidBy: paid.value || who.value,
+        paidBy: paid.value,
         split: selected(),
       };
       if (!expense.desc) return say("Give it a name.", "err");

@@ -147,8 +147,8 @@
     <div class="p-label">AGREGAR · ADD AN EXPENSE</div>
     <div id="addForm">
       <div class="add-field">
-        <label class="add-lbl" for="addWho">YOUR NAME</label>
-        <select id="addWho"><option value="">—</option></select>
+        <label class="add-lbl" for="addPaid">PAID BY</label>
+        <select id="addPaid"><option value="">—</option></select>
       </div>
       <div class="add-field">
         <label class="add-lbl" for="addDesc">WHAT WAS IT</label>
@@ -158,10 +158,6 @@
         <label class="add-lbl" for="addAmt">AMOUNT (MXN · total incl. tip)</label>
         <input id="addAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" />
         <span class="add-usd" id="addUsd"></span>
-      </div>
-      <div class="add-field">
-        <label class="add-lbl" for="addPaid">PAID BY</label>
-        <select id="addPaid"></select>
       </div>
       <div class="add-field">
         <label class="add-lbl">SPLIT BETWEEN</label>
@@ -182,11 +178,7 @@
 
   <div class="panel">
     <div class="p-label">QUIÉN DEBE A QUIÉN · SETTLE UP</div>
-    <div class="settle-toggle">
-      <button type="button" id="modeMin" class="seg on">Fewest payments</button>
-      <button type="button" id="modePerson" class="seg">By person</button>
-    </div>
-    <div id="settlePersonWrap" style="display:none">
+    <div id="settlePersonWrap">
       <select id="settleWho"><option value="all">Everyone</option></select>
     </div>
     <div id="settle"></div>
