@@ -8,6 +8,8 @@ the Vercel project **cdmxbach**, live at **https://www.fcbachelona.com**.
   single source of truth for every map pin. All map pages read from it.
 - Photo data: `js/photos.js` (`window.PHOTOS`) drives the El Álbum gallery
   (`photos.html`). Image files live in `assets/Photos/`.
+- Expense data: `js/expenses.js` (`window.CREW` + `window.EXPENSES`) drives La
+  Cuenta (`cuenta.html`); balances + settlement computed in `js/cuenta.js`.
 - Deploy: `vercel deploy --prod` from this folder (already linked to cdmxbach).
 
 ---
@@ -92,3 +94,32 @@ as possible.
 - Don't ask about rotation or tape — auto-assign them.
 - Don't invent a caption or category — those come from José.
 - Don't commit full-resolution phone photos (multi-MB) — always downscale first.
+
+---
+
+## Expense intake workflow (La Cuenta)
+
+When José sends a bill/receipt to split, add it to `js/expenses.js` and deploy.
+
+1. **Read the receipt.** If it's a photo, recover it from the transcript (same
+   technique as photos) and read the total. Capture the **total in MXN**, the
+   venue/description, and the date.
+2. **Ask only what's missing** — usually **who paid** and **who's splitting**
+   (which crew names). If José already said (e.g. "Contramar, paid by Max,
+   split 7 ways"), don't re-ask.
+3. **Names must match `window.CREW`** exactly: Izak, Max, Brian, Mike, Vishnu,
+   Edwin, Jose, Soumya. "Split N ways" with names listed → put those names in
+   `split`. An even split is assumed; if someone covers a different share, ask.
+4. **Append an entry** to `window.EXPENSES`:
+   ```js
+   { id: "venue-day", date: "MAY 28", day: "thu", desc: "Contramar · dinner",
+     amountMXN: 9702.50, paidBy: "Max",
+     split: ["Izak","Max","Brian","Mike","Vishnu","Edwin","Jose"], note: "..." }
+   ```
+   `paidBy` is included in `split` if they ate too (almost always).
+5. **Don't compute balances by hand** — `js/cuenta.js` nets everyone out and
+   produces the minimal "who owes whom" transfers. Just add the data.
+6. **Deploy** and confirm the new total + settlement to José.
+
+The site shows MXN with a live USD estimate (open.er-api.com). Money is for a
+casual group tab — cent-level rounding (~$0.01 total) is fine.

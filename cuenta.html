@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>La Cuenta · CDMX Bach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;0,900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/nav.css">
+<style>
+  nav .more-toggle { color: var(--muted); }
+  nav .more.has-current > .more-toggle { color: var(--ink); border-bottom-color: var(--ink); }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --paper: #F0E4C8; --paper-light: #FBF4DF; --ink: #1A1410; --muted: #5C4F35; --gold: #C9A877;
+    --pos: #1A8F4F; --neg: #B11839;
+  }
+  html, body { width: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(0,0,0,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 90%, rgba(0,0,0,0.05) 0%, transparent 60%),
+      var(--paper);
+    font-family: 'Inter', sans-serif; color: var(--ink); padding-bottom: 60px; position: relative;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background-image: radial-gradient(circle at 1px 1px, rgba(26,20,16,0.04) 1px, transparent 0);
+    background-size: 3px 3px; pointer-events: none; mix-blend-mode: multiply; z-index: 0;
+  }
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(240, 228, 200, 0.96); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--ink); padding: 10px 14px;
+    display: flex; align-items: center; gap: 12px; font-family: 'IBM Plex Mono', monospace;
+  }
+  nav a.back { color: var(--ink); text-decoration: none; font-size: 16px; letter-spacing: 0.2em; }
+  nav .days { margin-left: auto; display: flex; align-items: center; gap: 12px; font-size: 11px; letter-spacing: 0.3em; font-weight: 700; }
+  nav .days a { color: var(--muted); text-decoration: none; padding: 4px 2px; border-bottom: 2px solid transparent; }
+  nav .days a.current { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .wrap { max-width: 720px; margin: 0 auto; padding: 26px 18px 0; position: relative; z-index: 1; }
+  .hero { text-align: center; margin-bottom: 22px; }
+  .hero .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.4em; text-transform: uppercase; }
+  .hero h1 { font-family: 'Fraunces', serif; font-style: italic; font-weight: 900; font-size: clamp(54px, 14vw, 88px); line-height: 0.9; margin: 6px 0 4px; letter-spacing: -0.025em; }
+  .hero .sub { font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; color: var(--muted); }
+
+  .panel { background: var(--paper-light); border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); padding: 18px; margin-bottom: 22px; }
+  .panel > .p-label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.4em; color: var(--muted); font-weight: 700; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1.5px solid var(--ink); }
+
+  .cu-total { font-family: 'Fraunces', serif; font-weight: 900; font-size: 40px; line-height: 1; }
+  .cu-mxn { font-size: 16px; color: var(--muted); font-style: italic; }
+  .cu-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-top: 8px; }
+
+  .cu-tx { display: flex; align-items: center; gap: 8px; padding: 11px 0; border-bottom: 1px dashed rgba(26,20,16,0.28); font-family: 'IBM Plex Mono', monospace; }
+  .cu-tx:last-child { border-bottom: none; }
+  .cu-from { font-weight: 700; font-size: 15px; }
+  .cu-arrow { color: var(--neg); font-weight: 700; }
+  .cu-to { font-weight: 700; font-size: 15px; color: var(--pos); }
+  .cu-amt { margin-left: auto; text-align: right; font-weight: 700; font-size: 15px; }
+  .cu-u { display: block; font-size: 9px; color: var(--muted); font-weight: 400; letter-spacing: 0.04em; }
+  .cu-even { font-family: 'IBM Plex Mono', monospace; color: var(--muted); letter-spacing: 0.2em; text-align: center; padding: 16px; }
+
+  .cu-bal { display: flex; align-items: baseline; gap: 10px; padding: 9px 0; border-bottom: 1px dashed rgba(26,20,16,0.22); font-family: 'IBM Plex Mono', monospace; }
+  .cu-bal:last-child { border-bottom: none; }
+  .cu-name { font-weight: 700; font-size: 14px; min-width: 70px; }
+  .cu-blbl { font-size: 10px; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; }
+  .cu-bamt { margin-left: auto; font-weight: 700; font-size: 15px; }
+  .cu-bal.pos .cu-bamt { color: var(--pos); }
+  .cu-bal.neg .cu-bamt { color: var(--neg); }
+
+  .cu-log { padding: 12px 0; border-bottom: 1px dashed rgba(26,20,16,0.28); }
+  .cu-log:last-child { border-bottom: none; }
+  .cu-log-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+  .cu-log-desc { font-family: 'Fraunces', serif; font-style: italic; font-weight: 700; font-size: 19px; }
+  .cu-log-amt { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 15px; white-space: nowrap; }
+  .cu-log-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 5px; letter-spacing: 0.04em; line-height: 1.5; }
+  .cu-log-meta strong { color: var(--ink); }
+
+  .cu-tip { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-align: center; border: 2px dashed var(--muted); padding: 12px 14px; line-height: 1.7; }
+  .footer { margin-top: 30px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.3em; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="back">← BACH</a>
+  <div class="days">
+    <a href="thursday.html">THU</a>
+    <a href="friday.html">FRI</a>
+    <a href="saturday.html">SAT</a>
+    <a href="sunday.html">SUN</a>
+    <div class="more has-current">
+      <button class="more-toggle" type="button" aria-haspopup="true" aria-expanded="false">MÁS ▾</button>
+      <div class="more-menu">
+        <a href="map.html">MAP</a>
+        <a href="photos.html">PICS</a>
+        <a href="labase.html">BASE</a>
+        <a href="cuenta.html" class="current">CUENTA</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">── cdmx bach '26 · la cuenta ──</div>
+    <h1>La Cuenta</h1>
+    <div class="sub">— quién debe qué · who owes whom —</div>
+  </div>
+
+  <div class="panel">
+    <div class="p-label">TOTAL DEL VIAJE · TRIP TOTAL</div>
+    <div id="cuentaSummary"></div>
+  </div>
+
+  <div class="panel">
+    <div class="p-label">QUIÉN DEBE A QUIÉN · SETTLE UP</div>
+    <div id="settle"></div>
+  </div>
+
+  <div class="panel">
+    <div class="p-label">BALANCES</div>
+    <div id="balances"></div>
+  </div>
+
+  <div class="panel">
+    <div class="p-label">GASTOS · EXPENSE LOG</div>
+    <div id="log"></div>
+  </div>
+
+  <div class="cu-tip">Send new bills to José (with who paid + who's splitting) and they show up here.</div>
+
+  <div class="footer">─── EDWIN'S BACH · CDMX '26 ───</div>
+</div>
+
+<script src="js/expenses.js"></script>
+<script src="js/cuenta.js"></script>
+<script src="js/nav.js"></script>
+</body>
+</html>
