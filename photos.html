@@ -7,7 +7,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900;1,9..144,400;1,9..144,700;1,9..144,900&family=IBM+Plex+Mono:wght@400;500;600;700&family=Caveat:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/nav.css">
 <style>
+  nav .more-toggle { color: var(--muted); }
+  nav .more.has-current > .more-toggle { color: var(--ink); border-bottom-color: var(--ink); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --paper: #E8DCC0; --paper-light: #FBF4DF; --ink: #1A1410; --muted: #5C4F35;
@@ -104,8 +107,14 @@
     <a href="friday.html">FRI</a>
     <a href="saturday.html">SAT</a>
     <a href="sunday.html">SUN</a>
-    <a href="map.html">MAP</a>
-    <a href="photos.html" class="current">PICS</a>
+    <div class="more has-current">
+      <button class="more-toggle" type="button" aria-haspopup="true" aria-expanded="false">MÁS ▾</button>
+      <div class="more-menu">
+        <a href="map.html">MAP</a>
+        <a href="photos.html" class="current">PICS</a>
+        <a href="labase.html">BASE</a>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -158,6 +167,7 @@
   </div>
 </div>
 
+<script src="js/nav.js"></script>
 <script src="js/photos.js"></script>
 <script>
   const photos = window.PHOTOS || [];

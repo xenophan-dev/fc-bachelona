@@ -8,7 +8,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Alfa+Slab+One&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="css/nav.css">
 <style>
+  nav .more-toggle { color: rgba(244,230,204,0.55); }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg-deep: #5E0A0D;
@@ -375,8 +377,14 @@
     <a href="friday.html" class="current">FRI</a>
     <a href="saturday.html">SAT</a>
     <a href="sunday.html">SUN</a>
-    <a href="map.html">MAP</a>
-    <a href="photos.html">PICS</a>
+    <div class="more">
+      <button class="more-toggle" type="button" aria-haspopup="true" aria-expanded="false">MÁS ▾</button>
+      <div class="more-menu">
+        <a href="map.html">MAP</a>
+        <a href="photos.html">PICS</a>
+        <a href="labase.html">BASE</a>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -509,5 +517,6 @@
   map.fitBounds(group.getBounds().pad(0.15));
 </script>
 
+<script src="js/nav.js"></script>
 </body>
 </html>
