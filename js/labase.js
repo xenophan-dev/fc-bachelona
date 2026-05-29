@@ -157,18 +157,18 @@
     61: "Light rain", 63: "Rain", 65: "Heavy rain", 71: "Snow", 73: "Snow", 75: "Snow",
     80: "Showers", 81: "Showers", 82: "Heavy showers", 95: "Thunderstorm", 96: "Storm", 99: "Storm",
   };
-  const cToF = c => Math.round(c * 9 / 5 + 32);
+  const fToC = f => Math.round((f - 32) * 5 / 9);
   function renderWeather() {
     const el = document.getElementById("weather");
     if (!el) return;
     const url = "https://api.open-meteo.com/v1/forecast?latitude=19.4326&longitude=-99.1332" +
       "&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min" +
-      "&timezone=America%2FMexico_City&forecast_days=4";
+      "&temperature_unit=fahrenheit&timezone=America%2FMexico_City&forecast_days=4";
     fetch(url).then(r => r.json()).then(d => {
       const c = d.current, days = d.daily;
       const dayNames = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-      let html = '<div class="wx-now"><span class="wx-temp">' + Math.round(c.temperature_2m) + '°C</span>' +
-        '<span class="wx-tempf">' + cToF(c.temperature_2m) + '°F</span>' +
+      let html = '<div class="wx-now"><span class="wx-temp">' + Math.round(c.temperature_2m) + '°F</span>' +
+        '<span class="wx-tempf">' + fToC(c.temperature_2m) + '°C</span>' +
         '<span class="wx-desc">' + (WMO[c.weather_code] || "—") + '</span></div>';
       html += '<div class="wx-days">';
       for (let i = 0; i < days.time.length; i++) {
@@ -196,10 +196,10 @@
     const fromMxn = () => { const v = parseFloat(mxn.value); usd.value = isNaN(v) ? "" : (v / rate).toFixed(2); };
     usd.addEventListener("input", fromUsd);
     mxn.addEventListener("input", fromMxn);
-    usd.value = "100"; fromUsd(); setNote();
+    mxn.value = "500"; fromMxn(); setNote();
     // open.er-api.com: keyless + CORS-enabled, updated daily.
     fetch("https://open.er-api.com/v6/latest/USD").then(r => r.json()).then(d => {
-      if (d && d.rates && d.rates.MXN) { rate = d.rates.MXN; live = true; fromUsd(); setNote(); }
+      if (d && d.rates && d.rates.MXN) { rate = d.rates.MXN; live = true; fromMxn(); setNote(); }
     }).catch(() => {});
   }
 
