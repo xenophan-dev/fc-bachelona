@@ -19,9 +19,9 @@ window.EXPENSES = [
     id: "contramar-thu",
     date: "MAY 28", day: "thu",
     desc: "Contramar · dinner",
-    amountMXN: 9702.50,
+    amountMXN: 11157.88, // $9,702.50 subtotal + 15% tip ($1,455.38)
     paidBy: "Max",
     split: ["Izak", "Max", "Brian", "Mike", "Vishnu", "Edwin", "Jose"],
-    note: "Tostadas de atún, aguachile, pulpo, mezcalitas",
+    note: "$9,702.50 + 15% tip · tostadas de atún, aguachile, pulpo, mezcalitas",
   },
 ];
