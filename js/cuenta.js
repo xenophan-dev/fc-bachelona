@@ -125,69 +125,75 @@
     }).catch(() => {});
   }
 
-  // ── Add-an-expense flow (parse → confirm → commit) ──
+  // ── Add-an-expense (structured form → commit) ──
   function setupAddForm() {
     const form = document.getElementById("addForm");
     if (!form) return;
     const who = document.getElementById("addWho");
+    const paid = document.getElementById("addPaid");
+    const desc = document.getElementById("addDesc");
+    const amt = document.getElementById("addAmt");
+    const usd = document.getElementById("addUsd");
     const pin = document.getElementById("addPin");
-    const text = document.getElementById("addText");
-    const askBtn = document.getElementById("addAsk");
+    const chipsEl = document.getElementById("addChips");
     const status = document.getElementById("addStatus");
-    const review = document.getElementById("addReview");
+    const crew = DATA.crew || [];
 
-    (DATA.crew || []).forEach(n => {
-      const o = document.createElement("option");
-      o.value = n; o.textContent = n; who.appendChild(o);
+    crew.forEach(n => {
+      who.appendChild(new Option(n, n));
+      paid.appendChild(new Option(n, n));
+    });
+
+    const chips = {};
+    crew.forEach(n => {
+      const c = document.createElement("div");
+      c.className = "add-chip on"; c.textContent = n; c.dataset.name = n;
+      c.addEventListener("click", () => c.classList.toggle("on"));
+      chipsEl.appendChild(c); chips[n] = c;
+    });
+    const selected = () => crew.filter(n => chips[n].classList.contains("on"));
+
+    document.getElementById("addAll").addEventListener("click", () => crew.forEach(n => chips[n].classList.add("on")));
+    document.getElementById("addNone").addEventListener("click", () => crew.forEach(n => chips[n].classList.remove("on")));
+
+    // Picking "your name" defaults the payer to you and ensures you're in the split.
+    who.addEventListener("change", () => {
+      if (who.value) { paid.value = who.value; chips[who.value] && chips[who.value].classList.add("on"); }
+    });
+    // The payer always shares — keep their chip on.
+    paid.addEventListener("change", () => { if (paid.value && chips[paid.value]) chips[paid.value].classList.add("on"); });
+
+    amt.addEventListener("input", () => {
+      const v = parseFloat(amt.value);
+      usd.textContent = isFinite(v) && v > 0 ? "≈ $" + (v / RATE).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " USD" : "";
     });
 
     const say = (msg, kind) => { status.textContent = msg || ""; status.className = "add-status" + (kind ? " " + kind : ""); };
-    let proposal = null;
 
-    function showProposal(p) {
-      proposal = p;
-      const head = p.amountMXN / p.split.length;
-      review.innerHTML =
-        '<div class="add-prop">' +
-          '<div class="add-prop-desc">' + p.desc + '</div>' +
-          '<div class="add-prop-meta">' + peso(p.amountMXN) + ' · paid by <strong>' + p.paidBy + '</strong> · split ' +
-            p.split.length + ' ways (' + p.split.join(", ") + ') · ' + peso(head) + '/head</div>' +
-          '<div class="add-prop-actions">' +
-            '<button type="button" id="addConfirm" class="add-btn">✓ Confirm &amp; add</button>' +
-            '<button type="button" id="addCancel" class="add-btn ghost">✕ Cancel</button>' +
-          '</div>' +
-        '</div>';
-      review.style.display = "block";
-      document.getElementById("addCancel").onclick = () => { review.style.display = "none"; proposal = null; };
-      document.getElementById("addConfirm").onclick = commit;
-    }
+    document.getElementById("addSave").addEventListener("click", () => {
+      const expense = {
+        desc: desc.value.trim(),
+        amountMXN: parseFloat(amt.value),
+        paidBy: paid.value || who.value,
+        split: selected(),
+      };
+      if (!expense.desc) return say("Give it a name.", "err");
+      if (!(expense.amountMXN > 0)) return say("Enter an amount.", "err");
+      if (!expense.paidBy) return say("Pick who paid.", "err");
+      if (expense.split.length === 0) return say("Pick who's splitting it.", "err");
+      if (!pin.value) return say("Enter the crew PIN.", "err");
 
-    function commit() {
       say("Saving…");
       fetch("/api/expenses", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "commit", pin: pin.value, expense: proposal }),
+        body: JSON.stringify({ action: "commit", pin: pin.value, expense }),
       }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
         if (!ok) return say(d.error || "Couldn't save.", "err");
         DATA.expenses = d.expenses; render();
-        review.style.display = "none"; text.value = ""; proposal = null;
-        say("Added ✓", "ok");
-      }).catch(() => say("Network error.", "err"));
-    }
-
-    askBtn.addEventListener("click", () => {
-      if (!who.value) return say("Pick your name first.", "err");
-      if (!pin.value) return say("Enter the crew PIN.", "err");
-      if (!text.value.trim()) return say("Describe the expense.", "err");
-      say("Asking Claude…");
-      review.style.display = "none";
-      fetch("/api/expenses", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "parse", pin: pin.value, submittedBy: who.value, text: text.value }),
-      }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
-        if (!ok) return say(d.error || "Couldn't parse.", "err");
-        say(""); showProposal(d.proposal);
-      }).catch(() => say("Network error.", "err"));
+        desc.value = ""; amt.value = ""; usd.textContent = "";
+        crew.forEach(n => chips[n].classList.add("on"));
+        say("Added ✓ — totals updated", "ok");
+      }).catch(() => say("Network error — try again.", "err"));
     });
   }
 

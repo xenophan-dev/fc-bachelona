@@ -78,23 +78,23 @@
   .cu-log-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 5px; letter-spacing: 0.04em; line-height: 1.5; }
   .cu-log-meta strong { color: var(--ink); }
 
-  /* Add-an-expense */
-  .add-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
-  .add-row > * { font-family: 'IBM Plex Mono', monospace; font-size: 13px; padding: 9px 10px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); }
-  #addWho { flex: 1; min-width: 120px; }
-  #addPin { width: 110px; }
-  #addText { width: 100%; font-family: 'Fraunces', serif; font-style: italic; font-size: 16px; min-height: 60px; resize: vertical; }
-  .add-btn { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.14em; padding: 9px 14px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper-light); cursor: pointer; }
-  .add-btn.ghost { background: var(--paper); color: var(--ink); }
+  /* Add-an-expense (structured) */
+  .add-field { margin-bottom: 12px; }
+  .add-lbl { display: block; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.3em; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
+  .add-field select, .add-field input { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 14px; padding: 10px 11px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); }
+  .add-field input:focus, .add-field select:focus { outline: none; box-shadow: 3px 3px 0 var(--ink); }
+  #addAmt { font-family: 'Fraunces', serif; font-weight: 700; font-size: 20px; }
+  .add-usd { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 5px; display: block; }
+  .add-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .add-chip { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; padding: 8px 12px; border: 2px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; user-select: none; }
+  .add-chip.on { background: var(--ink); color: var(--paper-light); }
+  .add-chip-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .add-mini { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.12em; padding: 5px 10px; border: 1.5px solid var(--muted); background: transparent; color: var(--muted); cursor: pointer; }
+  .add-btn { width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.18em; padding: 12px; border: 2px solid var(--ink); background: var(--ink); color: var(--paper-light); cursor: pointer; margin-top: 4px; }
   .add-btn:hover { transform: translateY(-1px); }
-  .add-status { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.06em; margin-top: 8px; min-height: 14px; }
+  .add-status { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); letter-spacing: 0.06em; margin-top: 10px; min-height: 14px; text-align: center; }
   .add-status.err { color: var(--neg); }
   .add-status.ok { color: var(--pos); }
-  .add-prop { margin-top: 12px; border: 2px dashed var(--ink); padding: 12px; background: var(--paper); }
-  .add-prop-desc { font-family: 'Fraunces', serif; font-style: italic; font-weight: 700; font-size: 19px; }
-  .add-prop-meta { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
-  .add-prop-actions { display: flex; gap: 8px; margin-top: 12px; }
-  .add-hint { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.04em; margin-top: 8px; line-height: 1.6; }
   .cu-tip { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; text-align: center; border: 2px dashed var(--muted); padding: 12px 14px; line-height: 1.7; }
   .footer { margin-top: 30px; text-align: center; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.3em; }
 </style>
@@ -135,17 +135,37 @@
   <div class="panel">
     <div class="p-label">AGREGAR · ADD AN EXPENSE</div>
     <div id="addForm">
-      <div class="add-row">
-        <select id="addWho"><option value="">your name…</option></select>
-        <input id="addPin" type="password" inputmode="numeric" placeholder="crew PIN" autocomplete="off" />
+      <div class="add-field">
+        <label class="add-lbl" for="addWho">YOUR NAME</label>
+        <select id="addWho"><option value="">—</option></select>
       </div>
-      <div class="add-row">
-        <textarea id="addText" placeholder="e.g. Mike covered tacos for Brian and me, ~$600"></textarea>
+      <div class="add-field">
+        <label class="add-lbl" for="addDesc">WHAT WAS IT</label>
+        <input id="addDesc" type="text" maxlength="80" placeholder="e.g. Tacos Don Juan · lunch" />
       </div>
-      <button type="button" id="addAsk" class="add-btn">Ask Claude →</button>
+      <div class="add-field">
+        <label class="add-lbl" for="addAmt">AMOUNT (MXN · total incl. tip)</label>
+        <input id="addAmt" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" />
+        <span class="add-usd" id="addUsd"></span>
+      </div>
+      <div class="add-field">
+        <label class="add-lbl" for="addPaid">PAID BY</label>
+        <select id="addPaid"></select>
+      </div>
+      <div class="add-field">
+        <label class="add-lbl">SPLIT BETWEEN</label>
+        <div class="add-chips" id="addChips"></div>
+        <div class="add-chip-actions">
+          <button type="button" class="add-mini" id="addAll">All</button>
+          <button type="button" class="add-mini" id="addNone">Clear</button>
+        </div>
+      </div>
+      <div class="add-field">
+        <label class="add-lbl" for="addPin">CREW PIN</label>
+        <input id="addPin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="off" />
+      </div>
+      <button type="button" id="addSave" class="add-btn">+ ADD EXPENSE</button>
       <div class="add-status" id="addStatus"></div>
-      <div id="addReview" style="display:none"></div>
-      <div class="add-hint">Tell Claude who paid, the amount, and who's splitting — it drafts the entry and you confirm before it's saved.</div>
     </div>
   </div>
 
