@@ -67,4 +67,90 @@ window.PHOTOS = [
     location: "Contramar, Roma Norte",
     rot: 1.3,
   },
+
+  // ─── Friday · Lucha Libre @ Arena México ───
+  {
+    img: "assets/Photos/lucha-arena-wide.jpg",
+    cap: "Arena México · sold out",
+    cat: ["act"],
+    date: "MAY 29", time: "20:45", day: "fri",
+    location: "Arena México, Doctores",
+    rot: -1.8, taped: true,
+  },
+  {
+    img: "assets/Photos/lucha-calavera-entrada.jpg",
+    cap: "Calavera Jr. I · la entrada",
+    cat: ["act"],
+    date: "MAY 29", time: "20:55", day: "fri",
+    location: "Arena México, Doctores",
+    rot: 1.5,
+  },
+  {
+    img: "assets/Photos/lucha-aniversario.jpg",
+    cap: "Aniversario CMLL",
+    cat: ["act"],
+    date: "MAY 29", time: "21:00", day: "fri",
+    location: "Arena México, Doctores",
+    rot: -2.1,
+  },
+  {
+    img: "assets/Photos/lucha-equipo-ringside.jpg",
+    cap: "El equipo @ ringside",
+    cat: ["crew", "act"],
+    date: "MAY 29", time: "21:30", day: "fri",
+    location: "Arena México, Doctores",
+    rot: 2.0, taped: true,
+  },
+  {
+    img: "assets/Photos/lucha-ringside.jpg",
+    cap: "Máscaras everywhere",
+    cat: ["act"],
+    date: "MAY 29", time: "22:15", day: "fri",
+    location: "Arena México, Doctores",
+    rot: -1.4,
+  },
+
+  // ─── Saturday · UCL Final + post-match @ Salón Malafama ───
+  {
+    img: "assets/Photos/malafama-ucl.jpg",
+    cap: "UCL Final · Salón Malafama",
+    cat: ["act"],
+    date: "MAY 30", time: "10:30", day: "sat",
+    location: "Salón Malafama, Roma Norte",
+    rot: -1.6,
+  },
+  {
+    img: "assets/Photos/malafama-equipo.jpg",
+    cap: "FC Bachelona · post-match",
+    cat: ["crew", "act"],
+    date: "MAY 30", time: "12:15", day: "sat",
+    location: "Salón Malafama, Roma Norte",
+    rot: 1.9, taped: true,
+  },
+
+  // ─── Saturday · taco crawl ───
+  {
+    img: "assets/Photos/taco-pescadilla.jpg",
+    cap: "Pescadilla · taco crawl",
+    cat: ["com"],
+    date: "MAY 30", time: "12:45", day: "sat",
+    location: "Taco crawl · Roma / Condesa",
+    rot: -1.7,
+  },
+  {
+    img: "assets/Photos/taco-quesabirria.jpg",
+    cap: "Quesabirria · jerseys & tacos",
+    cat: ["com", "crew"],
+    date: "MAY 30", time: "13:00", day: "sat",
+    location: "Taco crawl · Roma / Condesa",
+    rot: 2.2, taped: true,
+  },
+  {
+    img: "assets/Photos/taco-carnitas.jpg",
+    cap: "Carnitas en azul",
+    cat: ["com"],
+    date: "MAY 30", time: "13:30", day: "sat",
+    location: "Taco crawl · Roma / Condesa",
+    rot: -1.3,
+  },
 ];
