@@ -92,7 +92,7 @@ export default async function handler(req, res) {
   if (req.method === "POST") {
     const body = req.body || {};
     const action = body.action;
-    if (action !== "commit" && action !== "delete") return res.status(400).json({ error: "Unknown action." });
+    if (action !== "commit" && action !== "delete" && action !== "edit") return res.status(400).json({ error: "Unknown action." });
     if (!process.env.CREW_PIN) return res.status(503).json({ error: "Adding isn't set up yet." });
     if (String(body.pin || "") !== String(process.env.CREW_PIN)) return res.status(401).json({ error: "Wrong PIN." });
     if (!redis) return res.status(503).json({ error: "Store not configured." });
@@ -113,9 +113,30 @@ export default async function handler(req, res) {
       }
     }
 
-    // delete
     const id = String(body.id || "");
     if (!id) return res.status(400).json({ error: "Missing id." });
+
+    if (action === "edit") {
+      // Only desc and note are editable — amount / payer / split would invalidate
+      // the historical math; delete + re-add for those.
+      const patch = body.patch || {};
+      try {
+        const expenses = await loadExpenses(redis);
+        const i = expenses.findIndex(e => e.id === id);
+        if (i < 0) return res.status(404).json({ error: "Not found." });
+        const e = { ...expenses[i] };
+        if (patch.desc != null) e.desc = String(patch.desc).slice(0, 80).trim();
+        if (patch.note != null) e.note = String(patch.note).slice(0, 120);
+        if (!e.desc) return res.status(400).json({ error: "Name can't be empty." });
+        expenses[i] = e;
+        await redis.set(KV_KEY, expenses);
+        return res.status(200).json({ expenses });
+      } catch {
+        return res.status(500).json({ error: "Couldn't save." });
+      }
+    }
+
+    // delete
     try {
       const expenses = await loadExpenses(redis);
       const filtered = expenses.filter(e => e.id !== id);

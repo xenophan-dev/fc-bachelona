@@ -119,11 +119,24 @@
           '<div class="cu-log-meta">' + e.date + ' · paid by <strong>' + e.paidBy + '</strong> · split ' +
             e.split.length + ' ways · ' + peso(head) + '/head' +
             (e.note ? ' · ' + e.note : '') + '</div>' +
+          '<div class="cu-log-detail">' +
+            '<div class="cu-log-sub">SPLIT BETWEEN</div>' +
+            '<div class="cu-log-names">' + e.split.join(" · ") + '</div>' +
+            '<div class="cu-log-each">each owes ' + peso(head) + ' ' + usd(head) + '</div>' +
+            '<button type="button" class="cu-log-edit">✎ Rename</button>' +
+          '</div>' +
         '</div>';
       }).join("");
-      // Wire the delete buttons.
+
+      // Tap a row to expand/collapse. Buttons inside stop propagation.
+      logEl.querySelectorAll(".cu-log").forEach(row => {
+        row.addEventListener("click", () => row.classList.toggle("open"));
+      });
+
+      // Delete buttons.
       logEl.querySelectorAll(".cu-log-del").forEach(btn => {
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
           const row = btn.closest(".cu-log");
           const id = row && row.dataset.id;
           const desc = row && row.querySelector(".cu-log-desc").textContent;
@@ -139,6 +152,31 @@
             body: JSON.stringify({ action: "delete", pin, id }),
           }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
             if (!ok) { btn.disabled = false; return alert(d.error || "Couldn't delete."); }
+            DATA.expenses = d.expenses; render();
+          }).catch(() => { btn.disabled = false; alert("Network error."); });
+        });
+      });
+
+      // Rename buttons (in expanded view).
+      logEl.querySelectorAll(".cu-log-edit").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const row = btn.closest(".cu-log");
+          const id = row && row.dataset.id;
+          const current = row && row.querySelector(".cu-log-desc").textContent;
+          if (!id) return;
+          const next = (prompt("Rename:", current) || "").trim();
+          if (!next || next === current) return;
+          const pinEl = document.getElementById("addPin");
+          let pin = pinEl && pinEl.value;
+          if (!pin) pin = prompt("PIN:") || "";
+          if (!pin) return;
+          btn.disabled = true;
+          fetch("/api/expenses", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "edit", pin, id, patch: { desc: next } }),
+          }).then(r => r.json().then(d => ({ ok: r.ok, d }))).then(({ ok, d }) => {
+            if (!ok) { btn.disabled = false; return alert(d.error || "Couldn't save."); }
             DATA.expenses = d.expenses; render();
           }).catch(() => { btn.disabled = false; alert("Network error."); });
         });

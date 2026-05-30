@@ -78,8 +78,16 @@
   .cu-bal.pos .cu-bamt { color: var(--pos); }
   .cu-bal.neg .cu-bamt { color: var(--neg); }
 
-  .cu-log { padding: 12px 0; border-bottom: 1px dashed rgba(26,20,16,0.28); }
+  .cu-log { padding: 12px 0; border-bottom: 1px dashed rgba(26,20,16,0.28); cursor: pointer; }
   .cu-log:last-child { border-bottom: none; }
+  .cu-log-detail { display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(26,20,16,0.22); }
+  .cu-log.open .cu-log-detail { display: block; }
+  .cu-log-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 0.3em; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
+  .cu-log-names { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink); line-height: 1.6; }
+  .cu-log-each { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 5px; letter-spacing: 0.04em; }
+  .cu-log-edit { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.12em; font-weight: 700; color: var(--muted); background: none; border: 1.5px solid var(--muted); padding: 6px 12px; cursor: pointer; margin-top: 12px; }
+  .cu-log-edit:hover { color: var(--ink); border-color: var(--ink); }
+  .cu-log-edit:disabled { opacity: 0.4; cursor: wait; }
   .cu-log-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
   .cu-log-desc { font-family: 'Fraunces', serif; font-style: italic; font-weight: 700; font-size: 19px; flex: 1; }
   .cu-log-amt { font-family: 'IBM Plex Mono', monospace; font-weight: 700; font-size: 15px; white-space: nowrap; }
