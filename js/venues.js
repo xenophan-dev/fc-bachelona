@@ -140,10 +140,10 @@
       representative: true,
     },
     {
-      id: "mezcal-tasting", name: "Mezcal Tasting",
-      day: "sat", time: "14:00", cat: "beb",
-      lat: 19.4180, lng: -99.1610,
-      addr: "Roma Norte · TBD · book ahead · approx",
+      id: "siesta", name: "Siesta",
+      day: "sat", time: "14:00", cat: "act",
+      lat: 19.41738, lng: -99.15676,
+      addr: "Airbnb HQ · Guanajuato 238 · rest",
       representative: true,
     },
     {
