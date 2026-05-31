@@ -161,4 +161,30 @@ window.PHOTOS = [
     location: "Taco crawl · Roma / Condesa",
     rot: -1.3,
   },
+
+  // ─── Saturday · Handshake Speakeasy ───
+  {
+    img: "assets/Photos/handshake-equipo.jpg",
+    cap: "El equipo @ Handshake",
+    cat: ["crew", "beb"],
+    date: "MAY 30", time: "18:05", day: "sat",
+    location: "Handshake Speakeasy, Juárez",
+    rot: 1.7, taped: true,
+  },
+  {
+    img: "assets/Photos/handshake-cocktail.jpg",
+    cap: "Cóctel firma · Handshake",
+    cat: ["beb"],
+    date: "MAY 30", time: "18:30", day: "sat",
+    location: "Handshake Speakeasy, Juárez",
+    rot: -2.0,
+  },
+  {
+    img: "assets/Photos/handshake-fuego.jpg",
+    cap: "El fuego · Handshake",
+    cat: ["beb"],
+    date: "MAY 30", time: "19:00", day: "sat",
+    location: "Handshake Speakeasy, Juárez",
+    rot: 1.4,
+  },
 ];
