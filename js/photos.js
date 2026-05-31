@@ -187,4 +187,12 @@ window.PHOTOS = [
     location: "Handshake Speakeasy, Juárez",
     rot: 1.4,
   },
+  {
+    img: "assets/Photos/paramo-chacalaca.jpg",
+    cap: "Ceviche chacalaca · Páramo",
+    cat: ["com"],
+    date: "MAY 30", time: "19:40", day: "sat",
+    location: "Páramo, Roma Norte",
+    rot: -1.8,
+  },
 ];
