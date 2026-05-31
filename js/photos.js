@@ -195,4 +195,12 @@ window.PHOTOS = [
     location: "Páramo, Roma Norte",
     rot: -1.8,
   },
+  {
+    img: "assets/Photos/paramo-taco.jpg",
+    cap: "Taco · Páramo",
+    cat: ["com"],
+    date: "MAY 30", time: "19:55", day: "sat",
+    location: "Páramo, Roma Norte",
+    rot: 1.5,
+  },
 ];
