@@ -102,6 +102,14 @@ window.PHOTOS = [
     rot: 2.0, taped: true,
   },
   {
+    img: "assets/Photos/lucha-enmascarados.jpg",
+    cap: "El equipo · enmascarados",
+    cat: ["crew", "act"],
+    date: "MAY 29", time: "21:45", day: "fri",
+    location: "Arena México, Doctores",
+    rot: 1.6, taped: true,
+  },
+  {
     img: "assets/Photos/lucha-ringside.jpg",
     cap: "Máscaras everywhere",
     cat: ["act"],
